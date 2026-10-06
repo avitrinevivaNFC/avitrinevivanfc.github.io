@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "bash scripts/deploy.sh",
+    "deploy:vitrine": "bash scripts/deploy-vitrine.sh",
     "thumbs": "node scripts/thumbs.mjs"
   },
   "dependencies": {

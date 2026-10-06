@@ -66,6 +66,14 @@ Use apenas uma faixa que você tenha licença para usar em site comercial.
 
 ## Publicar no GitHub Pages
 
+Site principal: **https://avitrinevivanfc.github.io/** (repositório `avitrinevivaNFC/avitrinevivanfc.github.io`, branch `main`):
+
+```bash
+npm run deploy:vitrine
+```
+
+Cópia antiga em thiagodobronx.github.io:
+
 ```bash
 npm run deploy   # build + push de dist/ para o branch gh-pages
 ```
