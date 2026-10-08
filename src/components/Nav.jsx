@@ -20,7 +20,9 @@ const Nav = forwardRef(function Nav({ product, music }, progressRef) {
       </nav>
       <div className="label pointer-events-none fixed bottom-0 z-50 flex w-full items-end justify-between p-6 text-ink md:p-10">
         <span>
-          {product.name} — {product.price}
+          {product.name} —{' '}
+          {product.oldPrice && <s className="mr-2 hidden opacity-50 md:inline">{product.oldPrice}</s>}
+          {product.price}
         </span>
         <span className="flex items-end gap-5 md:gap-8">
           {music?.available && (

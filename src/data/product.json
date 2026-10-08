@@ -4,7 +4,7 @@
   "title": "Vitrine Viva",
   "brand": "VITRINE VIVA",
   "collection": "Vitrine Viva 2026 / Series NFC",
-  "price": "R$ 199,00",
+  "price": "R$ 99,00",
   "colors": [
     "#f8f7f4",
     "#1a1a1a"
@@ -98,13 +98,19 @@
   "whatsapp": {
     "number": "5515936182306",
     "contact": "Olá! Vim pelo site da Vitrine Viva e quero conhecer as Placas NFC. Pode me ajudar a escolher a ideal para a minha empresa?",
-    "purchase": "Olá! Vim pelo site da Vitrine Viva e quero garantir a minha Placa NFC — modelo {model} ({price}). Como fazemos para fechar o pedido?"
+    "purchase": "Olá! Vim pelo site da Vitrine Viva e quero garantir a minha Placa NFC — modelo {model} na oferta de lançamento ({price}). Como fazemos para fechar o pedido?"
   },
   "music": {
     "src": "audio/musica-de-fundo.mp3",
     "volume": 0.4,
     "title": "Sun Is Here Again — Lonely in the Rain"
   },
-  "priceValue": 199.0,
-  "currency": "BRL"
+  "priceValue": 99.0,
+  "currency": "BRL",
+  "oldPrice": "R$ 199,00",
+  "promo": {
+    "short": "−50%",
+    "long": "· Lançamento"
+  },
+  "copyright": "Desenvolvido por Vitrine Viva © 2026"
 }

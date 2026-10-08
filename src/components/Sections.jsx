@@ -97,11 +97,26 @@ export function Finale({ product, index, model }) {
           <div data-reveal className="text-7xl font-thin opacity-10 md:text-8xl">
             {pad(index)}
           </div>
-          <p data-reveal className="label mt-6 opacity-50">
-            {product.brand} — {product.name}
+          <p data-reveal className="label mt-6 flex items-center gap-3">
+            <span className="whitespace-nowrap opacity-50">
+              {product.brand} — {product.name}
+            </span>
+            {product.promo && (
+              <span className="rounded-full bg-ink px-2.5 py-1 text-[9px] leading-none tracking-[0.2em] whitespace-nowrap text-paper">
+                {product.promo.short}
+                <span className="hidden md:inline"> {product.promo.long}</span>
+              </span>
+            )}
           </p>
-          <p data-reveal className="mt-2 font-serif text-4xl italic">
-            {product.price}
+          <p data-reveal className="mt-2 flex items-baseline gap-4 font-serif italic">
+            {product.oldPrice && (
+              <s className="text-xl opacity-40 decoration-1" aria-label={`De ${product.oldPrice}`}>
+                {product.oldPrice}
+              </s>
+            )}
+            <span className="text-4xl" aria-label={`Por ${product.price}`}>
+              {product.price}
+            </span>
           </p>
         </div>
         <div data-reveal className="flex flex-col items-start gap-4 md:items-end">
@@ -116,6 +131,7 @@ export function Finale({ product, index, model }) {
             <span className="absolute inset-0 translate-y-full bg-ink transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0" />
           </a>
           <span className="label opacity-40">{product.cta.note}</span>
+          <span className="label text-[9px] opacity-30">{product.copyright}</span>
         </div>
       </div>
     </section>
