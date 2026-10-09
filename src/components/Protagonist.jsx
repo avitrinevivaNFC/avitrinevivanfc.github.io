@@ -60,8 +60,8 @@ export default function Protagonist({ model, flight, onFlightDone, shadowColor, 
     // scroll; in between it eases back to face-on.
     const w = spinWeight();
     if (w === 0 && (spin.target || spin.pitchTarget)) resetSpin();
-    spin.current = THREE.MathUtils.damp(spin.current, spin.target, 4, delta);
-    spin.pitch = THREE.MathUtils.damp(spin.pitch, spin.pitchTarget, 4, delta);
+    spin.current = THREE.MathUtils.damp(spin.current, spin.target, 6, delta);
+    spin.pitch = THREE.MathUtils.damp(spin.pitch, spin.pitchTarget, 6, delta);
     const yaw = pose.rotY - (1 - k) * Math.PI + spin.current * w;
     const tiltX = spin.pitch * w;
 

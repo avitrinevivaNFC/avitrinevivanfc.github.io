@@ -81,3 +81,10 @@ body:has(#thumb) {
 @media (prefers-reduced-motion: reduce) {
   .sound-bars.is-playing i { animation: none; height: 7px; }
 }
+
+/* While the mockup is being dragged with the mouse. */
+html.is-spinning,
+html.is-spinning * {
+  cursor: grabbing !important;
+  user-select: none;
+}

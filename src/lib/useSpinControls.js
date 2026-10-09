@@ -6,9 +6,10 @@ const MAX_STEP = 120; // px — ignore jumps (pointer re-entering the window)
 
 /**
  * Free 360° spin on both axes, in the showcase header and at 100% scroll.
- * - Mouse: just moving the pointer turns the object — crossing the whole
- *   screen sideways is one full turn, top-to-bottom is one full flip.
- *   Moving over the model picker (`[data-no-spin]`) doesn't rotate.
+ * - Mouse: press on the stage (`[data-spin-stage]`) and drag — crossing the
+ *   whole screen sideways is one full turn, top-to-bottom one full flip.
+ *   Releasing stops it (it eases into the exact spot it was left at);
+ *   merely moving the mouse never rotates it.
  * - Touch: on the stage (`[data-spin-stage]`), with the page fully at the
  *   top or at the end (100%), a gesture that starts sideways spins the
  *   mockup (both axes for the rest of that drag). A gesture that starts
@@ -28,15 +29,27 @@ export default function useSpinControls() {
       spin.pitchTarget += (dy / window.innerHeight) * TURN;
     };
 
+    let dragging = false; // mouse button held down on the stage
+
+    const onPointerDown = (e) => {
+      if (e.pointerType === 'touch' || e.button !== 0) return;
+      if (!e.target.closest?.('[data-spin-stage]') || spinWeight() < 0.95) return;
+      e.preventDefault(); // no text selection while dragging
+      dragging = true;
+      last = { x: e.clientX, y: e.clientY };
+      document.documentElement.classList.add('is-spinning');
+    };
     const onPointerMove = (e) => {
-      if (e.pointerType !== 'mouse') return;
+      if (!dragging || e.pointerType === 'touch') return;
       const prev = last;
       last = { x: e.clientX, y: e.clientY };
-      if (!prev || spinWeight() === 0 || e.target.closest?.('[data-no-spin]')) return;
       rotateBy(last.x - prev.x, last.y - prev.y);
     };
-    const onPointerLeave = () => {
+    const onPointerUp = (e) => {
+      if (!dragging || e?.pointerType === 'touch') return;
+      dragging = false;
       last = null;
+      document.documentElement.classList.remove('is-spinning');
     };
 
     const onTouchStart = (e) => {
@@ -67,14 +80,20 @@ export default function useSpinControls() {
       last = null;
     };
 
+    window.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove, { passive: true });
-    document.documentElement.addEventListener('pointerleave', onPointerLeave);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    window.addEventListener('blur', onPointerUp);
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: false });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     return () => {
+      window.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
-      document.documentElement.removeEventListener('pointerleave', onPointerLeave);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+      window.removeEventListener('blur', onPointerUp);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);

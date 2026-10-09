@@ -10,14 +10,14 @@ export function Showcase({ title, models, flyingSlot, onSelect }) {
     <section id="top" data-section className="relative flex h-svh items-end justify-center pb-[10vh]">
       <h1 className="sr-only">{title}</h1>
       {/* Touch area for spinning; outside it the page scrolls normally. */}
-      <div data-spin-stage className="absolute top-[12vh] right-[24vw] bottom-[24vh] left-[6vw] md:hidden" />
+      <div data-spin-stage className="absolute top-[12vh] right-[24vw] bottom-[24vh] left-[6vw] md:top-[10vh] md:right-[30vw] md:bottom-[18vh] md:left-[30vw] md:cursor-grab" />
 
       <div className="absolute top-1/2 right-4 z-30 -translate-y-1/2 md:right-[5vw]">
         <ModelPicker models={models} flyingSlot={flyingSlot} onSelect={onSelect} />
       </div>
 
       <p data-hero-fade className="label relative z-20 text-center opacity-50">
-        <span className="hidden md:inline">Passe o mouse para girar 360°</span>
+        <span className="hidden md:inline">Clique e arraste a placa para girar 360°</span>
         <span className="md:hidden">Arraste a placa para girar 360°</span>
       </p>
     </section>
@@ -91,7 +91,7 @@ export function Finale({ product, index, model }) {
   return (
     <section data-section className="relative flex h-svh items-end px-[8vw] pt-[8vw] pb-[14vh] md:pb-[calc(8vw+3.5rem)]">
       {/* Touch area to spin the mockup at 100% scroll (invisible). */}
-      <div data-spin-stage className="absolute top-[10vh] right-[6vw] bottom-[55vh] left-[6vw] md:hidden" />
+      <div data-spin-stage className="absolute top-[10vh] right-[6vw] bottom-[55vh] left-[6vw] md:top-[8vh] md:right-[36vw] md:bottom-[42vh] md:left-[36vw] md:cursor-grab" />
       <div className="relative z-20 flex w-full flex-col gap-10 pt-10 md:flex-row md:items-end md:justify-between">
         <div>
           <div data-reveal className="text-7xl font-thin opacity-10 md:text-8xl">
