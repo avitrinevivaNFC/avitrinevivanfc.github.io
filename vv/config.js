@@ -2,24 +2,18 @@
    A chave do Web3Forms pode ficar aqui porque é pública por natureza (só envia para o e-mail cadastrado nela).
    O Access Token do Mercado Pago fica somente no Worker (ver LEIA-ME.md). */
 window.VV_CONFIG = {
-  precoUnitario: 75,
   frete: 25, // fixo por pedido
   qtdMaxima: 100,
 
-  // Preço unitário por quantidade. null = condição ainda não cadastrada (o site mostra "sob consulta").
-  // Ao preencher, atualize também a mesma tabela em worker-mercadopago/worker.js.
+  // Condições por quantidade ainda não cadastradas: o site mostra "Consultar condições" pelo WhatsApp.
   faixas: [
     { min: 5, precoUnitario: null },
     { min: 10, precoUnitario: null },
   ],
 
-  // Cor de cada modelo conforme as artes existentes.
-  modelos: [
-    { id: "acrilico-l", label: "Acrílico", cor: "Branca", img: "vv/img/placa-branca.webp" },
-    { id: "quadrada", label: "Quadrada", cor: "Branca", img: "vv/img/placa-quadrada.webp" },
-    { id: "avalie-l", label: "Avalie-nos", cor: "Preta", img: "vv/img/placa-preta.webp" },
-    { id: "preta-cores", label: "Preta Cores", cor: "Preta", img: "vv/img/placa-preta-cores.webp" },
-  ],
+  // Modelos e preços vêm de vv/catalogo.js, gerado por tools/catalogo.py.
+  modelos: window.VV_CATALOGO.modelos,
+  categorias: window.VV_CATALOGO.categorias,
 
   whatsapp: "5515936182306",
 

@@ -9,13 +9,15 @@
   const modelo = (id) => C.modelos.find((m) => m.id === id);
 
   const novoEstado = () => ({
-    etapa: 0, cor: "Branca", modelo: C.modelos[0].id, qtd: "1", distintas: false,
+    etapa: 0, cat: C.modelos[0].cat, modelo: C.modelos[0].id, qtd: "1", distintas: false,
     unidades: [novaUnidade(C.modelos[0].id)], comprador: { pais: "Brasil" }, pedidoId: null, emailEnviado: false,
   });
   function novaUnidade(m) { return { modelo: m, estab: "", google: "", nfc: "", qr: "", extra: "", obs: "" }; }
 
   let E;
   try { E = JSON.parse(sessionStorage.getItem(CHAVE)) || novoEstado(); } catch { E = novoEstado(); }
+  if (!modelo(E.modelo)) E = novoEstado();
+  E.cat = modelo(E.modelo).cat; // pedidos em andamento salvos antes das categorias
   const salvar = () => { try { sessionStorage.setItem(CHAVE, JSON.stringify(E)); } catch { /* navegação privada */ } };
 
   /* Sem WebGL a cena 3D não abre: libera a rolagem e mostra a apresentação estática */
@@ -30,15 +32,18 @@
 
   /* Valores */
   const qtdValida = () => /^\d+$/.test(E.qtd) && +E.qtd >= 1 && +E.qtd <= C.qtdMaxima;
-  function precoPara(q) {
-    let p = C.precoUnitario;
-    for (const f of C.faixas) if (f.precoUnitario != null && q >= f.min) p = f.precoUnitario;
-    return p;
+  /* Quantidade por modelo. O Worker recalcula o mesmo total a partir destes itens. */
+  function itensDoPedido() {
+    if (!E.distintas) return [{ id: E.modelo, qtd: +E.qtd }];
+    const n = new Map();
+    E.unidades.forEach((u) => n.set(u.modelo, (n.get(u.modelo) || 0) + 1));
+    return [...n].map(([id, qtd]) => ({ id, qtd }));
   }
   function valores() {
     if (!qtdValida()) return null;
-    const q = +E.qtd, u = precoPara(q), subtotal = q * C.precoUnitario, desconto = subtotal - q * u;
-    return { q, u, subtotal, desconto, frete: C.frete, total: subtotal - desconto + C.frete };
+    const itens = itensDoPedido();
+    const subtotal = itens.reduce((t, i) => t + i.qtd * modelo(i.id).preco, 0);
+    return { q: +E.qtd, itens, subtotal, frete: C.frete, total: subtotal + C.frete };
   }
 
   /* DOM */
@@ -88,7 +93,12 @@
   function validar(etapa) {
     Object.keys(erros).forEach((k) => delete erros[k]);
     if (etapa === 0 && !qtdValida()) erros.qtd = `Informe um número inteiro de 1 a ${C.qtdMaxima}.`;
+    else if (etapa === 0 && !E.distintas && +E.qtd < (modelo(E.modelo).min || 1)) erros.qtd = `Este modelo tem pedido mínimo de ${modelo(E.modelo).min} unidades.`;
     if (etapa === 1) {
+      if (E.distintas) itensDoPedido().forEach(({ id, qtd }) => {
+        const min = modelo(id).min || 1;
+        if (qtd < min) erros[`u${E.unidades.findIndex((u) => u.modelo === id)}-modelo`] = `${modelo(id).label} tem pedido mínimo de ${min} unidades.`;
+      });
       E.unidades.forEach((u, i) => {
         if (!u.estab.trim()) erros[`u${i}-estab`] = "Informe o nome do estabelecimento.";
         if (u.google.trim() && !urlOk(u.google)) erros[`u${i}-google`] = "Confira o link. Exemplo: https://g.page/r/...";
@@ -132,17 +142,21 @@
   }
 
   function etapaProduto() {
-    const lista = C.modelos.filter((m) => m.cor === E.cor);
+    const lista = C.modelos.filter((m) => m.cat === E.cat);
     return [
       h("h3", null, "Escolha sua placa"),
-      h("fieldset", { class: "vv-opcoes" }, h("legend", null, "Cor"),
-        ["Branca", "Preta"].map((c) => h("label", { class: "vv-op" },
-          h("input", { type: "radio", name: "cor", value: c, checked: c === E.cor, on: { change: () => {
-            E.cor = c; E.modelo = C.modelos.find((m) => m.cor === c).id; ajustarUnidades(); salvar(); desenhar(); } } }), c))),
+      h("fieldset", { class: "vv-opcoes vv-cats" }, h("legend", null, "Categoria"),
+        C.categorias.map((c) => h("label", { class: "vv-op" },
+          h("input", { type: "radio", name: "cat", value: c.id, checked: c.id === E.cat, on: { change: () => {
+            E.cat = c.id; escolherModelo(C.modelos.find((m) => m.cat === c.id).id); desenhar(); } } }), c.label))),
       h("fieldset", { class: "vv-opcoes" }, h("legend", null, "Modelo"),
         lista.map((m) => h("label", { class: "vv-op" },
-          h("input", { type: "radio", name: "modelo", value: m.id, checked: m.id === E.modelo, on: { change: () => { E.modelo = m.id; ajustarUnidades(); salvar(); } } }),
-          h("img", { src: m.img, alt: "", loading: "lazy" }), m.label))),
+          h("input", { type: "radio", name: "modelo", value: m.id, checked: m.id === E.modelo, on: { change: () => {
+            const antes = E.qtd; escolherModelo(m.id); if (E.qtd !== antes) desenhar(); else desenharResumo(); } } }),
+          m.img ? h("img", { src: m.img, alt: "", loading: "lazy" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
+          m.label,
+          h("b", { class: "vv-op-preco" }, brl(m.preco)),
+          [m.tam, m.min > 1 ? `Mínimo de ${m.min} unidades` : null, m.nota].filter(Boolean).map((t) => h("small", { class: "vv-op-info" }, t))))),
       h("div", { class: "vv-campo" },
         h("label", { for: "qtd" }, h("span", { style: "display:block;margin-bottom:.35rem;font-size:.88rem;font-weight:500" }, "Quantidade")),
         h("div", { class: "vv-qtd" },
@@ -156,6 +170,13 @@
       acoes(null, "CONTINUAR"),
     ];
   }
+  function escolherModelo(id) {
+    const minAnterior = modelo(E.modelo).min || 1, min = modelo(id).min || 1, atual = parseInt(E.qtd, 10) || 0;
+    E.modelo = id;
+    // O mínimo do modelo anterior não pode virar a quantidade do próximo, que pode custar bem mais.
+    if (!E.distintas && (atual < min || (minAnterior > 1 && atual === minAnterior))) { E.qtd = String(min); delete erros.qtd; }
+    ajustarUnidades(); salvar();
+  }
   function mudaQtd(n) { E.qtd = String(n); delete erros.qtd; ajustarUnidades(); salvar(); desenhar(); }
 
   function blocoUnidade(u, i) {
@@ -166,7 +187,7 @@
     } } }, "Usar o link do Google");
     return h("div", { class: "vv-unidade" },
       E.distintas ? h("h4", null, `Placa ${i + 1} de ${E.qtd}`) : null,
-      E.distintas ? campo("Modelo", p + "modelo", u.modelo, (v) => { if (v) u.modelo = v; }, { opcoes: C.modelos.map((m) => ({ v: m.id, t: `${m.label} (${m.cor.toLowerCase()})` })) }) : null,
+      E.distintas ? campo("Modelo", p + "modelo", u.modelo, (v) => { if (v) u.modelo = v; }, { opcoes: C.modelos.map((m) => ({ v: m.id, t: `${rotuloModelo(m.id)} · ${brl(m.preco)}` })) }) : null,
       campo("Nome do estabelecimento", p + "estab", u.estab, set("estab"), { max: 120 }),
       campo("Link da página de avaliações do Google", p + "google", u.google, set("google"), { opcional: true, tipo: "url", modo: "url", ph: "https://g.page/r/..." }),
       campo("Destino do NFC", p + "nfc", u.nfc, set("nfc"), { tipo: "url", modo: "url", ph: "https://" }), usarGoogle("nfc"),
@@ -231,7 +252,7 @@
     ];
   }
 
-  const rotuloModelo = (id) => { const m = modelo(id); return `${m.label} (${m.cor.toLowerCase()})`; };
+  const rotuloModelo = (id) => { const m = modelo(id); return m.cor ? `${m.label} (${m.cor.toLowerCase()})` : m.label; };
   const enderecoTexto = () => {
     const c = E.comprador;
     return `${c.rua}, ${c.numero}${c.compl ? " - " + c.compl : ""}, ${c.bairro}, ${c.cidade}/${c.uf}, CEP ${c.cep}, ${c.pais}`;
@@ -243,8 +264,8 @@
     return [
       h("h3", null, "Revise o seu pedido"),
       h("dl", { class: "vv-rev" },
-        par("Produto", `${E.qtd} × Placa NFC + QR Code`),
-        E.distintas ? [] : par("Modelo e cor", rotuloModelo(E.modelo)),
+        par("Quantidade", E.qtd),
+        E.distintas ? [] : par("Modelo", rotuloModelo(E.modelo)),
         E.unidades.map((u, i) => [
           par(E.distintas ? `Placa ${i + 1}` : "Estabelecimento", E.distintas ? `${u.estab} · ${rotuloModelo(u.modelo)}` : u.estab),
           par("Avaliações do Google", u.google), par("NFC", u.nfc), par("QR Code", u.qr), par("Outros canais", u.extra), par("Observações", u.obs),
@@ -261,7 +282,7 @@
       `Pedido: ${E.pedidoId}`, `Data: ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`, "",
       `COMPRADOR`, `${c.nome}`, `E-mail: ${c.email}`, `Telefone: ${c.fone}`, "",
       `ENTREGA`, enderecoTexto(), "",
-      `PRODUTO`, `${v.q} × Placa NFC + QR Code`, E.distintas ? "Placas com configurações diferentes:" : `Modelo: ${rotuloModelo(E.modelo)}. Mesmos dados para todas as unidades.`,
+      `PRODUTO`, ...v.itens.map((i) => `${i.qtd} × ${rotuloModelo(i.id)}: ${brl(i.qtd * modelo(i.id).preco)}`), E.distintas ? "Placas com configurações diferentes:" : `Modelo: ${rotuloModelo(E.modelo)}. Mesmos dados para todas as unidades.`,
     ];
     E.unidades.forEach((u, i) => {
       linhas.push("", E.distintas ? `PLACA ${i + 1}: ${rotuloModelo(u.modelo)}` : "CONFIGURAÇÃO", `Estabelecimento: ${u.estab}`);
@@ -270,7 +291,7 @@
       if (u.extra) linhas.push(`Outros canais: ${u.extra}`);
       if (u.obs) linhas.push(`Observações: ${u.obs}`);
     });
-    linhas.push("", `VALORES`, `Subtotal: ${brl(v.subtotal)}`, `Descontos: ${brl(v.desconto)}`, `Frete: ${brl(v.frete)}`, `Total: ${brl(v.total)}`, "",
+    linhas.push("", `VALORES`, `Subtotal: ${brl(v.subtotal)}`, `Frete: ${brl(v.frete)}`, `Total: ${brl(v.total)}`, "",
       `Pagamento: NÃO CONFIRMADO. Confira no Mercado Pago pela referência ${E.pedidoId}.`);
     return linhas.join("\n");
   }
@@ -305,7 +326,7 @@
     const v = valores();
     const r = await comTempo(`${C.pagamentoApi}/pagamento`, {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ pedido: E.pedidoId, qtd: v.q, modelos: [...new Set(E.unidades.map((u) => u.modelo))], totalExibido: v.total }),
+      body: JSON.stringify({ pedido: E.pedidoId, itens: v.itens, totalExibido: v.total }),
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok || !d.checkout_url) throw new Error(d.erro || "pagamento");
@@ -371,8 +392,7 @@
     const lin = (a, b, cl) => h("div", { class: cl }, h("span", null, a), h("span", null, b));
     if (!v) { resumo.replaceChildren(h("h3", null, "Resumo"), h("small", null, "Informe uma quantidade válida para ver os valores.")); return; }
     resumo.replaceChildren(...[h("h3", null, "Resumo"),
-      lin(`${v.q} × ${brl(C.precoUnitario)}`, brl(v.subtotal)),
-      v.desconto ? lin("Desconto por quantidade", "− " + brl(v.desconto)) : null,
+      ...v.itens.map((i) => lin(`${i.qtd} × ${rotuloModelo(i.id)}`, brl(i.qtd * modelo(i.id).preco))),
       lin("Frete fixo", brl(v.frete)),
       lin("Total", brl(v.total), "tot"),
       h("small", null, C.pagamentoApi ? "Pagamento processado pelo Mercado Pago, em ambiente próprio." : "O pagamento é combinado depois do envio do pedido."),
@@ -399,7 +419,7 @@
   window.vvSelecionarModelo = (id) => {
     const m = modelo(id);
     if (!m || E.etapa !== 0) return;
-    E.modelo = id; E.cor = m.cor; ajustarUnidades(); salvar(); desenhar();
+    E.cat = m.cat; escolherModelo(id); desenhar();
   };
 
   /* Revenda */
@@ -411,7 +431,9 @@
         : h("small", null, `${brl(preco)} por unidade · ${brl(q * preco)} + frete fixo de ${brl(C.frete)}`);
       return h("div", null, h("b", null, `${q} ${q > 1 ? "unidades" : "unidade"}`), v);
     };
-    alvo.replaceChildren(bloco(1, C.precoUnitario), ...C.faixas.map((f) => bloco(f.min, f.precoUnitario)));
+    const menor = Math.min(...C.modelos.map((m) => m.preco));
+    alvo.replaceChildren(h("div", null, h("b", null, "Por unidade"), h("small", null, `A partir de ${brl(menor)}, conforme o modelo, + frete fixo de ${brl(C.frete)} por pedido`)),
+      ...C.faixas.map((f) => bloco(f.min, f.precoUnitario)));
   })();
 
   /* Retorno do Mercado Pago: o status exibido vem sempre da consulta ao Worker, nunca da URL */
