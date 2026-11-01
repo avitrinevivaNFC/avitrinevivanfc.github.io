@@ -16,7 +16,7 @@
 
   let E;
   try { E = JSON.parse(sessionStorage.getItem(CHAVE)) || novoEstado(); } catch { E = novoEstado(); }
-  if (!modelo(E.modelo)) E = novoEstado();
+  if (!modelo(E.modelo) || !E.unidades.every((u) => modelo(u.modelo))) E = novoEstado(); // modelo saiu do catálogo
   E.cat = modelo(E.modelo).cat; // pedidos em andamento salvos antes das categorias
   const salvar = () => { try { sessionStorage.setItem(CHAVE, JSON.stringify(E)); } catch { /* navegação privada */ } };
 

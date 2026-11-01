@@ -35,7 +35,7 @@ window.VV_CATALOGO = {
   },
   {
    "id": "base",
-   "label": "Sem arte e personalizadas"
+   "label": "Sem arte"
   }
  ],
  "modelos": [
@@ -379,41 +379,25 @@ window.VV_CATALOGO = {
    "nota": "Inclui cestinha organizadora, placa Google com NFC e haste removível."
   },
   {
-   "id": "chaveiro-preto",
-   "label": "Chaveiro NFC Preto",
-   "cat": "kits",
-   "preco": 93,
-   "img": "vv/img/cat/chaveiro-preto.webp",
-   "min": 10
-  },
-  {
-   "id": "chaveiro-rosa",
-   "label": "Chaveiro NFC Rosa",
-   "cat": "kits",
-   "preco": 93,
-   "img": "vv/img/cat/chaveiro-rosa.webp",
-   "min": 10
-  },
-  {
    "id": "etiquetas-30",
    "label": "Etiquetas NFC regraváveis antimetal, 30 un.",
    "cat": "kits",
    "preco": 160,
-   "img": null
+   "img": "vv/img/cat/etiquetas-30.webp"
   },
   {
    "id": "etiquetas-50",
    "label": "Etiquetas NFC regraváveis antimetal, 50 un.",
    "cat": "kits",
    "preco": 210,
-   "img": null
+   "img": "vv/img/cat/etiquetas-50.webp"
   },
   {
    "id": "etiquetas-100",
    "label": "Etiquetas NFC regraváveis antimetal, 100 un.",
    "cat": "kits",
    "preco": 335,
-   "img": null
+   "img": "vv/img/cat/etiquetas-100.webp"
   },
   {
    "id": "sem-arte-branca",
@@ -430,16 +414,6 @@ window.VV_CATALOGO = {
    "preco": 102,
    "img": "vv/img/cat/sem-arte-preta.webp",
    "tam": "14 x 10 cm"
-  },
-  {
-   "id": "personalizada",
-   "label": "Placa com a sua arte",
-   "cat": "base",
-   "preco": 110,
-   "img": "vv/img/cat/personalizada.webp",
-   "tam": "12 x 10 cm",
-   "min": 30,
-   "nota": "Envie a arte em PDF; a equipe confirma os detalhes."
   }
  ]
 };
