@@ -2,8 +2,8 @@
    A chave do Web3Forms pode ficar aqui porque é pública por natureza (só envia para o e-mail cadastrado nela).
    O Access Token do Mercado Pago fica somente no Worker (ver LEIA-ME.md). */
 window.VV_CONFIG = {
-  precoUnitario: 99,
-  frete: 25, // fixo por pedido
+  precoUnitario: 1, // TESTE: voltar para 99
+  frete: 0, // TESTE: voltar para 25 (fixo por pedido)
   qtdMaxima: 100,
 
   // Preço unitário por quantidade. null = condição ainda não cadastrada (o site mostra "sob consulta").
