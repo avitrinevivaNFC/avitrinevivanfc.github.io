@@ -26,6 +26,6 @@ window.VV_CONFIG = {
   // Chave do web3forms.com (e-mail comercial). Vazio = pedido segue pelo WhatsApp.
   web3formsKey: "b0565e5f-a3ce-4c4d-a854-9be19d3e4204",
 
-  // Pendente: endereço do Worker publicado. Vazio = sem pagamento on-line; a equipe combina o pagamento.
-  pagamentoApi: "",
+  // Endereço do Worker publicado. Vazio = sem pagamento on-line; a equipe combina o pagamento.
+  pagamentoApi: "https://vitrine-viva-pagamento.worker-mercadopago.workers.dev",
 };

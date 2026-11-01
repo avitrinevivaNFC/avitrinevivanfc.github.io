@@ -308,8 +308,8 @@
       body: JSON.stringify({ pedido: E.pedidoId, qtd: v.q, modelos: [...new Set(E.unidades.map((u) => u.modelo))], totalExibido: v.total }),
     });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok || !d.init_point) throw new Error(d.erro || "pagamento");
-    return d.init_point;
+    if (!r.ok || !d.checkout_url) throw new Error(d.erro || "pagamento");
+    return d.checkout_url;
   }
 
   async function confirmar() {
@@ -418,7 +418,7 @@
   (async function retorno() {
     const p = new URLSearchParams(location.search), pedido = p.get("pedido");
     if (!pedido) return;
-    const pay = p.get("payment_id") || p.get("collection_id");
+    const ordem = p.get("order_id");
     history.replaceState(null, "", location.pathname);
     const caixa = document.getElementById("vv-retorno"), t = document.getElementById("vv-retorno-t"), m = document.getElementById("vv-retorno-p");
     document.getElementById("vv-retorno-x").onclick = () => { caixa.hidden = true; };
@@ -432,8 +432,8 @@
     };
     let status = null;
     try {
-      if (C.pagamentoApi && pay) {
-        const r = await comTempo(`${C.pagamentoApi}/status?payment_id=${encodeURIComponent(pay)}&pedido=${encodeURIComponent(pedido)}`, {});
+      if (C.pagamentoApi && ordem) {
+        const r = await comTempo(`${C.pagamentoApi}/status?order_id=${encodeURIComponent(ordem)}&pedido=${encodeURIComponent(pedido)}`, {});
         if (r.ok) status = (await r.json()).status;
       }
     } catch { /* tratado abaixo */ }
