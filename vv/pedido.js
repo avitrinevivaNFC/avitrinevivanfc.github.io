@@ -8,8 +8,9 @@
   const UFS = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
   const modelo = (id) => C.modelos.find((m) => m.id === id);
 
+  const TODOS = "todos"; // aba inicial: mostra o catálogo inteiro
   const novoEstado = () => ({
-    etapa: 0, cat: C.modelos[0].cat, modelo: C.modelos[0].id, qtd: "1", distintas: false,
+    etapa: 0, cat: TODOS, modelo: C.modelos[0].id, qtd: "1", distintas: false,
     unidades: [novaUnidade(C.modelos[0].id)], comprador: { pais: "Brasil" }, pedidoId: null, emailEnviado: false,
   });
   function novaUnidade(m) { return { modelo: m, estab: "", google: "", nfc: "", qr: "", extra: "", obs: "" }; }
@@ -17,7 +18,7 @@
   let E;
   try { E = JSON.parse(sessionStorage.getItem(CHAVE)) || novoEstado(); } catch { E = novoEstado(); }
   if (!modelo(E.modelo) || !E.unidades.every((u) => modelo(u.modelo))) E = novoEstado(); // modelo saiu do catálogo
-  E.cat = modelo(E.modelo).cat; // pedidos em andamento salvos antes das categorias
+  if (E.cat !== TODOS) E.cat = modelo(E.modelo).cat; // pedidos em andamento salvos antes das categorias
   const salvar = () => { try { sessionStorage.setItem(CHAVE, JSON.stringify(E)); } catch { /* navegação privada */ } };
 
   /* Sem WebGL a cena 3D não abre: libera a rolagem e mostra a apresentação estática */
@@ -142,14 +143,17 @@
   }
 
   function etapaProduto() {
-    const lista = C.modelos.filter((m) => m.cat === E.cat);
+    const lista = E.cat === TODOS ? C.modelos : C.modelos.filter((m) => m.cat === E.cat);
     return [
       h("h3", null, "Escolha sua placa"),
       h("fieldset", { class: "vv-opcoes vv-cats" }, h("legend", null, "Categoria"),
-        C.categorias.map((c) => h("label", { class: "vv-op" },
+        [{ id: TODOS, label: "Todos os itens" }, ...C.categorias].map((c) => h("label", { class: "vv-op" },
           h("input", { type: "radio", name: "cat", value: c.id, checked: c.id === E.cat, on: { change: () => {
-            E.cat = c.id; escolherModelo(C.modelos.find((m) => m.cat === c.id).id); desenhar(); } } }), c.label))),
-      h("fieldset", { class: "vv-opcoes" }, h("legend", null, "Modelo"),
+            E.cat = c.id;
+            // Filtrar mantém o modelo já escolhido quando ele continua visível.
+            if (c.id !== TODOS && modelo(E.modelo).cat !== c.id) escolherModelo(C.modelos.find((m) => m.cat === c.id).id);
+            salvar(); desenhar(); } } }), c.label))),
+      h("fieldset", { class: "vv-opcoes vv-modelos" }, h("legend", null, "Modelo"),
         lista.map((m) => h("label", { class: "vv-op" },
           h("input", { type: "radio", name: "modelo", value: m.id, checked: m.id === E.modelo, on: { change: () => {
             const antes = E.qtd; escolherModelo(m.id); if (E.qtd !== antes) desenhar(); else desenharResumo(); } } }),
@@ -419,7 +423,8 @@
   window.vvSelecionarModelo = (id) => {
     const m = modelo(id);
     if (!m || E.etapa !== 0) return;
-    E.cat = m.cat; escolherModelo(id); desenhar();
+    if (E.cat !== TODOS) E.cat = m.cat;
+    escolherModelo(id); desenhar();
   };
 
   /* Revenda */

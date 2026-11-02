@@ -6,6 +6,10 @@ window.VV_CATALOGO = {
    "label": "Avaliação Google"
   },
   {
+   "id": "cestas",
+   "label": "Cestinhas"
+  },
+  {
    "id": "pix",
    "label": "Pix"
   },
@@ -31,7 +35,7 @@ window.VV_CATALOGO = {
   },
   {
    "id": "kits",
-   "label": "Kits e acessórios"
+   "label": "Etiquetas NFC"
   },
   {
    "id": "base",
@@ -301,6 +305,15 @@ window.VV_CATALOGO = {
    "tam": "10 x 8 cm"
   },
   {
+   "id": "cartao-instagram",
+   "label": "Cartão de visita Instagram",
+   "cat": "instagram",
+   "preco": 101,
+   "img": "vv/img/cat/cartao-instagram.webp",
+   "tam": "6 x 9 cm",
+   "nota": "Frente e verso, com QR Code dinâmico. Estoque limitado."
+  },
+  {
    "id": "whatsapp-3d-preta",
    "label": "WhatsApp 3D Preta",
    "cat": "whatsapp",
@@ -337,14 +350,16 @@ window.VV_CATALOGO = {
    "label": "3 em 1 3D de mesa Preta",
    "cat": "combo",
    "preco": 145,
-   "img": "vv/img/cat/3em1-3d-preta.webp"
+   "img": "vv/img/cat/3em1-3d-preta.webp",
+   "nota": "Sob encomenda: envio em até 48 h após o pagamento."
   },
   {
    "id": "3em1-3d-branca",
    "label": "3 em 1 3D de mesa Branca",
    "cat": "combo",
    "preco": 145,
-   "img": "vv/img/cat/3em1-3d-branca.webp"
+   "img": "vv/img/cat/3em1-3d-branca.webp",
+   "nota": "Sob encomenda: envio em até 48 h após o pagamento."
   },
   {
    "id": "airbnb",
@@ -365,7 +380,7 @@ window.VV_CATALOGO = {
   {
    "id": "kit-cesta-preta",
    "label": "Kit Cesta Preta",
-   "cat": "kits",
+   "cat": "cestas",
    "preco": 155,
    "img": "vv/img/cat/kit-cesta-preta.webp",
    "nota": "Inclui cestinha organizadora, placa Google com NFC e haste removível."
@@ -373,7 +388,7 @@ window.VV_CATALOGO = {
   {
    "id": "kit-cesta-ouro",
    "label": "Kit Cesta Ouro",
-   "cat": "kits",
+   "cat": "cestas",
    "preco": 155,
    "img": "vv/img/cat/kit-cesta-ouro.webp",
    "nota": "Inclui cestinha organizadora, placa Google com NFC e haste removível."
