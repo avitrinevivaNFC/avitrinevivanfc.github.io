@@ -173,25 +173,62 @@
       h("button", { type: "submit", class: "vv-btn" }, avancarTxt));
   }
 
+  /* Carrossel: uma linha só, com arraste no celular e setas para quem usa mouse */
+  function carrossel(classe, chave, rotulo, nome, itens) {
+    const trilho = h("div", { class: "vv-trilho", "data-car": chave, on: { scroll: () => atualizarSetas(trilho) } }, itens);
+    const seta = (dir, txt, onde) => h("button", { type: "button", class: "vv-seta", "aria-label": `Ver ${nome} ${onde}`, on: { click: () => {
+      const suave = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      trilho.scrollBy({ left: dir * trilho.clientWidth * .8, behavior: suave ? "smooth" : "auto" }); } } }, txt);
+    return h("div", { class: `vv-carrossel ${classe}` },
+      h("fieldset", { class: "vv-opcoes" }, h("legend", null, rotulo), trilho),
+      h("div", { class: "vv-setas" }, seta(-1, "‹", "anteriores"), seta(1, "›", "seguintes")));
+  }
+  function atualizarSetas(trilho) {
+    const setas = trilho.closest(".vv-carrossel").querySelector(".vv-setas"), [ant, prox] = setas.children, fim = trilho.scrollWidth - trilho.clientWidth;
+    setas.hidden = fim <= 1;
+    ant.disabled = trilho.scrollLeft <= 1;
+    prox.disabled = trilho.scrollLeft >= fim - 1;
+  }
+  const atualizarCarrosseis = () => form.querySelectorAll(".vv-trilho").forEach(atualizarSetas);
+  /* O formulário é redesenhado inteiro: cada carrossel volta à posição anterior e mantém a opção marcada à vista. */
+  function posicionarCarrosseis(posicoes) {
+    form.querySelectorAll(".vv-trilho").forEach((t) => {
+      if (t.dataset.car in posicoes) t.scrollLeft = posicoes[t.dataset.car];
+      const marcada = t.querySelector("input:checked");
+      if (marcada) {
+        const a = marcada.closest(".vv-op"), esq = a.getBoundingClientRect().left - t.getBoundingClientRect().left + t.scrollLeft;
+        if (esq < t.scrollLeft || esq + a.offsetWidth > t.scrollLeft + t.clientWidth) t.scrollLeft = esq - (t.clientWidth - a.offsetWidth) / 2;
+      }
+    });
+    atualizarCarrosseis();
+  }
+  window.addEventListener("resize", atualizarCarrosseis);
+  if (document.fonts) document.fonts.ready.then(atualizarCarrosseis);
+
   function etapaProduto() {
     const lista = E.cat === TODOS ? C.modelos : C.modelos.filter((m) => m.cat === E.cat);
+    // A observação longa fica abaixo do carrossel, senão um único cartão alonga a linha inteira.
+    const nota = h("p", { class: "vv-op-nota" });
+    const mostrarNota = () => { nota.textContent = modelo(E.modelo).nota || ""; nota.hidden = !nota.textContent; };
+    mostrarNota();
     return [
       h("h3", null, "Escolha sua placa"),
-      h("fieldset", { class: "vv-opcoes vv-cats" }, h("legend", null, "Categoria"),
+      carrossel("vv-cats", "cat", "Categoria", "categorias",
         [{ id: TODOS, label: "Todos os itens" }, ...C.categorias].map((c) => h("label", { class: "vv-op" },
           h("input", { type: "radio", name: "cat", value: c.id, checked: c.id === E.cat, on: { change: () => {
             E.cat = c.id;
             // Filtrar mantém o modelo já escolhido quando ele continua visível.
             if (c.id !== TODOS && modelo(E.modelo).cat !== c.id) escolherModelo(C.modelos.find((m) => m.cat === c.id).id);
             salvar(); desenhar(); } } }), c.label))),
-      h("fieldset", { class: "vv-opcoes vv-modelos" }, h("legend", null, "Modelo"),
+      carrossel("vv-modelos", `modelos-${E.cat}`, "Modelo", "modelos",
         lista.map((m) => h("label", { class: "vv-op" },
           h("input", { type: "radio", name: "modelo", value: m.id, checked: m.id === E.modelo, on: { change: () => {
-            const antes = E.qtd; escolherModelo(m.id); if (E.qtd !== antes) desenhar(); else desenharResumo(); } } }),
+            const antes = E.qtd; escolherModelo(m.id); mostrarNota(); if (E.qtd !== antes) desenhar(); else desenharResumo(); } } }),
           m.img ? h("img", { src: m.img, alt: "", loading: "lazy", decoding: "async", width: "120", height: "120" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
           m.label,
           h("b", { class: "vv-op-preco" }, brl(m.preco)),
-          [m.tam, m.min > 1 ? `Mínimo de ${m.min} unidades` : null, m.nota].filter(Boolean).map((t) => h("small", { class: "vv-op-info" }, t))))),
+          [m.tam, m.min > 1 ? `Mínimo de ${m.min} unidades` : null].filter(Boolean).map((t) => h("small", { class: "vv-op-info" }, t))))),
+      nota,
       h("div", { class: "vv-campo" },
         h("label", { for: "qtd" }, h("span", { style: "display:block;margin-bottom:.35rem;font-size:.88rem;font-weight:500" }, "Quantidade")),
         h("div", { class: "vv-qtd" },
@@ -448,7 +485,12 @@
     etapas.replaceChildren(...ETAPAS.map((t, i) => h("li", { class: i < E.etapa ? "feita" : i === E.etapa ? "atual" : "", "aria-current": i === E.etapa ? "step" : null }, t)));
     const fn = [etapaProduto, etapaPersonalizacao, etapaEntrega, etapaRevisao, etapaPagamento][E.etapa];
     const isca = h("input", { type: "text", name: "botcheck", tabindex: "-1", autocomplete: "off", "aria-hidden": "true", style: "position:absolute;left:-9999px" });
+    const posicoes = {};
+    form.querySelectorAll(".vv-trilho").forEach((t) => { posicoes[t.dataset.car] = t.scrollLeft; });
+    const foco = document.activeElement, radioEmFoco = foco && foco.type === "radio" && form.contains(foco) ? foco.name : null;
     form.replaceChildren(isca, ...fn().flat(Infinity).filter((x) => x != null));
+    posicionarCarrosseis(posicoes);
+    if (radioEmFoco) { const r = form.querySelector(`input[name="${radioEmFoco}"]:checked`); if (r) r.focus({ preventScroll: true }); }
     desenharResumo();
   }
 
