@@ -4,6 +4,7 @@
 window.VV_CONFIG = {
   frete: 25, // fixo por pedido
   qtdMaxima: 100,
+  descontoConfigDepois: 20, // % sobre as placas quando o cliente personaliza ao receber. Igual ao Worker.
 
   // Condições por quantidade ainda não cadastradas: o site mostra "Consultar condições" pelo WhatsApp.
   faixas: [

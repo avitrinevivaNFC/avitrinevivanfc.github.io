@@ -10,7 +10,7 @@
 
   const TODOS = "todos"; // aba inicial: mostra o catálogo inteiro
   const novoEstado = () => ({
-    etapa: 0, cat: TODOS, modelo: C.modelos[0].id, qtd: "1", distintas: false,
+    etapa: 0, cat: TODOS, modelo: C.modelos[0].id, qtd: "1", carrinho: [], configDepois: false, distintas: false,
     unidades: [novaUnidade(C.modelos[0].id)], comprador: { pais: "Brasil" }, pedidoId: null, emailEnviado: false, ord: novoOrd(),
   });
   function novoOrd() { return Math.random().toString(36).slice(2, 10); }
@@ -18,7 +18,12 @@
 
   let E;
   try { E = JSON.parse(sessionStorage.getItem(CHAVE)) || novoEstado(); } catch { E = novoEstado(); }
-  if (!modelo(E.modelo) || !E.unidades.every((u) => modelo(u.modelo))) E = novoEstado(); // modelo saiu do catálogo
+  if (!Array.isArray(E.carrinho)) { // pedido em andamento salvo antes do carrinho
+    const n = new Map();
+    if (E.etapa > 0) (E.distintas ? E.unidades.map((u) => [u.modelo, 1]) : [[E.modelo, +E.qtd || 1]]).forEach(([id, q]) => n.set(id, (n.get(id) || 0) + q));
+    E.carrinho = [...n].map(([id, qtd]) => ({ id, qtd }));
+  }
+  if (!modelo(E.modelo) || !E.unidades.every((u) => modelo(u.modelo)) || !E.carrinho.every((i) => modelo(i.id))) E = novoEstado(); // modelo saiu do catálogo
   if (E.cat !== TODOS) E.cat = modelo(E.modelo).cat; // pedidos em andamento salvos antes das categorias
   if (!E.ord) E.ord = novoOrd(); // pedido em andamento salvo antes do histórico por etapa
   const salvar = () => { try { sessionStorage.setItem(CHAVE, JSON.stringify(E)); } catch { /* navegação privada */ } };
@@ -37,18 +42,15 @@
 
   /* Valores */
   const qtdValida = () => /^\d+$/.test(E.qtd) && +E.qtd >= 1 && +E.qtd <= C.qtdMaxima;
-  /* Quantidade por modelo. O Worker recalcula o mesmo total a partir destes itens. */
-  function itensDoPedido() {
-    if (!E.distintas) return [{ id: E.modelo, qtd: +E.qtd }];
-    const n = new Map();
-    E.unidades.forEach((u) => n.set(u.modelo, (n.get(u.modelo) || 0) + 1));
-    return [...n].map(([id, qtd]) => ({ id, qtd }));
-  }
+  const totalUnidades = () => E.carrinho.reduce((t, i) => t + i.qtd, 0);
+  const noCarrinho = (id) => E.carrinho.find((i) => i.id === id);
+  /* O Worker recalcula o mesmo total. A conta é em centavos e o desconto vale por unidade, como na cobrança. */
   function valores() {
-    if (!qtdValida()) return null;
-    const itens = itensDoPedido();
-    const subtotal = itens.reduce((t, i) => t + i.qtd * modelo(i.id).preco, 0);
-    return { q: +E.qtd, itens, subtotal, frete: C.frete, total: subtotal + C.frete };
+    if (!E.carrinho.length) return null;
+    const cent = (n) => Math.round(n * 100), pct = E.configDepois ? C.descontoConfigDepois : 0;
+    const sub = E.carrinho.reduce((t, i) => t + i.qtd * cent(modelo(i.id).preco), 0);
+    const comDesconto = E.carrinho.reduce((t, i) => t + i.qtd * Math.round(cent(modelo(i.id).preco) * (100 - pct) / 100), 0);
+    return { q: totalUnidades(), itens: E.carrinho, subtotal: sub / 100, desconto: (sub - comDesconto) / 100, frete: C.frete, total: (comDesconto + cent(C.frete)) / 100 };
   }
 
   /* DOM */
@@ -97,13 +99,8 @@
 
   function validar(etapa) {
     Object.keys(erros).forEach((k) => delete erros[k]);
-    if (etapa === 0 && !qtdValida()) erros.qtd = `Informe um número inteiro de 1 a ${C.qtdMaxima}.`;
-    else if (etapa === 0 && !E.distintas && +E.qtd < (modelo(E.modelo).min || 1)) erros.qtd = `Este modelo tem pedido mínimo de ${modelo(E.modelo).min} unidades.`;
-    if (etapa === 1) {
-      if (E.distintas) itensDoPedido().forEach(({ id, qtd }) => {
-        const min = modelo(id).min || 1;
-        if (qtd < min) erros[`u${E.unidades.findIndex((u) => u.modelo === id)}-modelo`] = `${modelo(id).label} tem pedido mínimo de ${min} unidades.`;
-      });
+    if (etapa === 0 && !E.carrinho.length) erros.carrinho = "Adicione pelo menos uma placa ao carrinho para continuar.";
+    if (etapa === 1 && !E.configDepois) {
       E.unidades.forEach((u, i) => {
         if (!u.estab.trim()) erros[`u${i}-estab`] = "Informe o nome do estabelecimento.";
         if (u.google.trim() && !urlOk(u.google)) erros[`u${i}-google`] = "Confira o link. Exemplo: https://g.page/r/...";
@@ -125,14 +122,39 @@
     return Object.keys(erros).length === 0;
   }
 
-  /* Normaliza a lista de placas conforme quantidade e modo */
+  /* Monta a lista de configurações a partir do carrinho, aproveitando o que já foi preenchido */
   function ajustarUnidades() {
-    if (!qtdValida()) return; // digitação em andamento: não descarta dados já preenchidos
-    if (+E.qtd === 1) E.distintas = false;
-    const alvo = E.distintas ? +E.qtd : 1;
-    while (E.unidades.length < alvo) E.unidades.push(novaUnidade(E.modelo));
-    E.unidades.length = alvo;
-    if (!E.distintas) E.unidades[0].modelo = E.modelo;
+    if (totalUnidades() <= 1) E.distintas = false;
+    const ids = E.distintas ? E.carrinho.flatMap((i) => Array(i.qtd).fill(i.id)) : [E.carrinho[0] ? E.carrinho[0].id : E.modelo];
+    const antigas = [...E.unidades];
+    E.unidades = ids.map((id) => {
+      const k = antigas.findIndex((u) => u.modelo === id);
+      if (k >= 0) return antigas.splice(k, 1)[0];
+      // Uma configuração para o pedido todo: os dados continuam valendo mesmo se a primeira placa mudar.
+      return !E.distintas && antigas.length ? { ...antigas.shift(), modelo: id } : novaUnidade(id);
+    });
+  }
+  function adicionarAoCarrinho() {
+    const tinhaErro = !!(erros.qtd || erros.carrinho), m = modelo(E.modelo), resta = C.qtdMaxima - totalUnidades();
+    delete erros.qtd; delete erros.carrinho;
+    if (!qtdValida()) erros.qtd = `Informe um número inteiro de 1 a ${C.qtdMaxima}.`;
+    else if (+E.qtd > resta) erros.qtd = resta ? `O pedido tem limite de ${C.qtdMaxima} placas: cabem mais ${resta}.` : `O pedido já está no limite de ${C.qtdMaxima} placas.`;
+    else if (+E.qtd + (noCarrinho(m.id) ? noCarrinho(m.id).qtd : 0) < (m.min || 1)) erros.qtd = `Este modelo tem pedido mínimo de ${m.min} unidades.`;
+    if (erros.qtd) { salvar(); desenhar(); document.getElementById("qtd").focus(); return; }
+    const adicionadas = +E.qtd, item = noCarrinho(m.id);
+    if (item) item.qtd += adicionadas; else E.carrinho.push({ id: m.id, qtd: adicionadas });
+    E.qtd = String(m.min || 1);
+    ajustarUnidades(); salvar();
+    // Redesenhar recriaria os 50 cartões: só atualiza o que mudou, salvo para limpar um erro exibido.
+    if (tinhaErro) desenhar(); else { document.getElementById("qtd").value = E.qtd; desenharResumo(); }
+    document.getElementById("vv-add-msg").textContent = `Adicionado: ${adicionadas} × ${rotuloModelo(m.id)}. Escolha outra placa ou continue.`;
+  }
+  function mudarNoCarrinho(id, q) {
+    const item = noCarrinho(id);
+    if (q < 1) E.carrinho = E.carrinho.filter((i) => i !== item); else item.qtd = q;
+    ajustarUnidades(); salvar(); desenharResumo();
+    const msg = document.getElementById("vv-add-msg");
+    if (msg) msg.textContent = "";
   }
 
   /* Etapas */
@@ -223,7 +245,7 @@
       carrossel("vv-modelos", `modelos-${E.cat}`, "Modelo", "modelos",
         lista.map((m) => h("label", { class: "vv-op" },
           h("input", { type: "radio", name: "modelo", value: m.id, checked: m.id === E.modelo, on: { change: () => {
-            const antes = E.qtd; escolherModelo(m.id); mostrarNota(); if (E.qtd !== antes) desenhar(); else desenharResumo(); } } }),
+            const antes = E.qtd; escolherModelo(m.id); mostrarNota(); if (E.qtd !== antes) desenhar(); } } }),
           m.img ? h("img", { src: m.img, alt: "", loading: "lazy", decoding: "async", width: "120", height: "120" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
           m.label,
           h("b", { class: "vv-op-preco" }, brl(m.preco)),
@@ -234,11 +256,14 @@
         h("div", { class: "vv-qtd" },
           h("button", { type: "button", "aria-label": "Diminuir quantidade", on: { click: () => mudaQtd(Math.max(1, (parseInt(E.qtd, 10) || 1) - 1)) } }, "−"),
           h("input", { id: "qtd", name: "qtd", inputmode: "numeric", value: E.qtd, "aria-invalid": erros.qtd ? "true" : null, "aria-describedby": erros.qtd ? "qtd-e" : null,
-            on: { input: (e) => { E.qtd = e.target.value.trim(); ajustarUnidades(); salvar(); desenharResumo(); } } }),
+            on: { input: (e) => { E.qtd = e.target.value.trim(); salvar(); } } }),
           h("button", { type: "button", "aria-label": "Aumentar quantidade", on: { click: () => mudaQtd(Math.min(C.qtdMaxima, (parseInt(E.qtd, 10) || 0) + 1)) } }, "+"),
           h("button", { type: "button", on: { click: () => mudaQtd(5) } }, "5 un."),
           h("button", { type: "button", on: { click: () => mudaQtd(10) } }, "10 un.")),
         erros.qtd ? h("small", { class: "vv-erro", id: "qtd-e" }, erros.qtd) : null),
+      h("button", { type: "button", class: "vv-btn sec vv-add", on: { click: adicionarAoCarrinho } }, "ADICIONAR AO CARRINHO"),
+      h("p", { class: "vv-add-msg", id: "vv-add-msg", role: "status" }),
+      erros.carrinho ? h("p", { class: "vv-aviso erro", role: "alert" }, erros.carrinho) : null,
       acoes(null, "CONTINUAR"),
     ];
   }
@@ -246,14 +271,14 @@
     const minAnterior = modelo(E.modelo).min || 1, min = modelo(id).min || 1, atual = parseInt(E.qtd, 10) || 0;
     E.modelo = id;
     // O mínimo do modelo anterior não pode virar a quantidade do próximo, que pode custar bem mais.
-    if (!E.distintas && (atual < min || (minAnterior > 1 && atual === minAnterior))) { E.qtd = String(min); delete erros.qtd; }
-    ajustarUnidades(); salvar();
+    if (atual < min || (minAnterior > 1 && atual === minAnterior)) { E.qtd = String(min); delete erros.qtd; }
+    salvar();
   }
   function mudaQtd(n) {
     const tinhaErro = !!erros.qtd, campo = document.getElementById("qtd");
-    E.qtd = String(n); delete erros.qtd; ajustarUnidades(); salvar();
+    E.qtd = String(n); delete erros.qtd; salvar();
     // Só muda o número: redesenhar o formulário recriaria os 50 cartões do catálogo.
-    if (!tinhaErro && E.etapa === 0 && campo) { campo.value = E.qtd; desenharResumo(); } else desenhar();
+    if (!tinhaErro && E.etapa === 0 && campo) campo.value = E.qtd; else desenhar();
   }
 
   function blocoUnidade(u, i) {
@@ -263,8 +288,7 @@
       if (v) { u[k] = v; document.getElementById(p + k).value = v; salvar(); } else document.getElementById(p + "google").focus();
     } } }, "Usar o link do Google");
     return h("div", { class: "vv-unidade" },
-      E.distintas ? h("h4", null, `Placa ${i + 1} de ${E.qtd}`) : null,
-      E.distintas ? campo("Modelo", p + "modelo", u.modelo, (v) => { if (v) u.modelo = v; }, { opcoes: C.modelos.map((m) => ({ v: m.id, t: `${rotuloModelo(m.id)} · ${brl(m.preco)}` })) }) : null,
+      E.distintas ? h("h4", null, `Placa ${i + 1} de ${totalUnidades()}: ${rotuloModelo(u.modelo)}`) : null,
       campo("Nome do estabelecimento", p + "estab", u.estab, set("estab"), { max: 120 }),
       campo("Link da página de avaliações do Google", p + "google", u.google, set("google"), { opcional: true, tipo: "url", modo: "url", ph: "https://g.page/r/..." }),
       campo("Destino do NFC", p + "nfc", u.nfc, set("nfc"), { tipo: "url", modo: "url", ph: "https://" }), usarGoogle("nfc"),
@@ -275,13 +299,22 @@
       campo("Observações sobre a configuração", p + "obs", u.obs, set("obs"), { opcional: true, area: true, max: 1000 }));
   }
   function etapaPersonalizacao() {
+    const n = totalUnidades(), modo = (depois, titulo, texto) => h("label", { class: "vv-op" },
+      h("input", { type: "radio", name: "personalizar", checked: E.configDepois === depois, on: { change: () => {
+        E.configDepois = depois; Object.keys(erros).forEach((k) => delete erros[k]); salvar(); desenhar(); } } }),
+      h("b", null, titulo), h("small", { class: "vv-op-info" }, texto));
     return [
-      h("h3", null, "Informe seus links"),
-      +E.qtd > 1 ? h("label", { class: "vv-check" },
-        h("input", { type: "checkbox", checked: E.distintas, on: { change: (e) => { E.distintas = e.target.checked; ajustarUnidades(); salvar(); desenhar(); } } }),
-        h("span", null, `Estas ${E.qtd} placas têm estabelecimentos ou links diferentes`)) : null,
-      +E.qtd > 1 && !E.distintas ? h("p", { class: "vv-ajuda", style: "margin-bottom:1rem" }, `Os dados abaixo valem para as ${E.qtd} placas.`) : null,
-      E.unidades.map(blocoUnidade),
+      h("h3", null, "Personalização"),
+      h("fieldset", { class: "vv-opcoes vv-modo" }, h("legend", null, "Como quer receber as placas?"),
+        modo(false, "Receber configurada por nós", "Informe seus links agora e receba pronta para usar."),
+        modo(true, `Receber em casa sem configuração: ${C.descontoConfigDepois}% de desconto`, "Não fazemos a configuração: você personaliza pessoalmente quando a placa chegar, com as orientações que enviamos por mensagem no despacho.")),
+      E.configDepois ? h("p", { class: "vv-aviso" }, `Você não precisa informar links agora. O desconto de ${C.descontoConfigDepois}% sobre as placas já aparece no resumo; o frete não entra no desconto.`) : [
+        n > 1 ? h("label", { class: "vv-check" },
+          h("input", { type: "checkbox", checked: E.distintas, on: { change: (e) => { E.distintas = e.target.checked; ajustarUnidades(); salvar(); desenhar(); } } }),
+          h("span", null, `Estas ${n} placas têm estabelecimentos ou links diferentes`)) : null,
+        n > 1 && !E.distintas ? h("p", { class: "vv-ajuda", style: "margin-bottom:1rem" }, `Os dados abaixo valem para as ${n} placas.`) : null,
+        E.unidades.map(blocoUnidade),
+      ],
       acoes(0, "CONTINUAR"),
     ];
   }
@@ -341,9 +374,8 @@
     return [
       h("h3", null, "Revise o seu pedido"),
       h("dl", { class: "vv-rev" },
-        par("Quantidade", E.qtd),
-        E.distintas ? [] : par("Modelo", rotuloModelo(E.modelo)),
-        E.unidades.map((u, i) => [
+        par("Placas", E.carrinho.map((i) => `${i.qtd} × ${rotuloModelo(i.id)}`).join("; ")),
+        E.configDepois ? par("Personalização", `Receber em casa sem configuração (${C.descontoConfigDepois}% de desconto)`) : E.unidades.map((u, i) => [
           par(E.distintas ? `Placa ${i + 1}` : "Estabelecimento", E.distintas ? `${u.estab} · ${rotuloModelo(u.modelo)}` : u.estab),
           par("Avaliações do Google", u.google), par("NFC", u.nfc), par("QR Code", u.qr), par("Outros canais", u.extra), par("Observações", u.obs),
         ]).flat(),
@@ -359,16 +391,17 @@
       `Pedido: ${E.pedidoId}`, `Data: ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`, "",
       `COMPRADOR`, `${c.nome}`, `E-mail: ${c.email}`, `Telefone: ${c.fone}`, "",
       `ENTREGA`, enderecoTexto(), "",
-      `PRODUTO`, ...v.itens.map((i) => `${i.qtd} × ${rotuloModelo(i.id)}: ${brl(i.qtd * modelo(i.id).preco)}`), E.distintas ? "Placas com configurações diferentes:" : `Modelo: ${rotuloModelo(E.modelo)}. Mesmos dados para todas as unidades.`,
+      `PRODUTO`, ...v.itens.map((i) => `${i.qtd} × ${rotuloModelo(i.id)}: ${brl(i.qtd * modelo(i.id).preco)}`),
+      E.configDepois ? `ENVIAR SEM CONFIGURAR: o cliente personaliza pessoalmente ao receber (${C.descontoConfigDepois}% de desconto). Mandar as orientações pelos canais de comunicação ao despachar.` : E.distintas ? "Placas com configurações diferentes:" : "Mesmos dados para todas as unidades.",
     ];
-    E.unidades.forEach((u, i) => {
+    if (!E.configDepois) E.unidades.forEach((u, i) => {
       linhas.push("", E.distintas ? `PLACA ${i + 1}: ${rotuloModelo(u.modelo)}` : "CONFIGURAÇÃO", `Estabelecimento: ${u.estab}`);
       if (u.google) linhas.push(`Google: ${normalizaUrl(u.google)}`);
       linhas.push(`NFC: ${normalizaUrl(u.nfc)}`, `QR Code: ${normalizaUrl(u.qr)}`);
       if (u.extra) linhas.push(`Outros canais: ${u.extra}`);
       if (u.obs) linhas.push(`Observações: ${u.obs}`);
     });
-    linhas.push("", `VALORES`, `Subtotal: ${brl(v.subtotal)}`, `Frete: ${brl(v.frete)}`, `Total: ${brl(v.total)}`, "",
+    linhas.push("", `VALORES`, `Subtotal: ${brl(v.subtotal)}`, ...(v.desconto ? [`Desconto (personalização pelo cliente): -${brl(v.desconto)}`] : []), `Frete: ${brl(v.frete)}`, `Total: ${brl(v.total)}`, "",
       `Pagamento: NÃO CONFIRMADO. Confira no Mercado Pago pela referência ${E.pedidoId}.`);
     return linhas.join("\n");
   }
@@ -392,7 +425,7 @@
     const r = await comTempo("https://api.web3forms.com/submit", {
       method: "POST", headers: { "content-type": "application/json", accept: "application/json" },
       body: JSON.stringify({
-        access_key: C.web3formsKey, subject: `Novo pedido ${E.pedidoId} - ${E.unidades[0].estab}`, from_name: "Site Vitrine Viva",
+        access_key: C.web3formsKey, subject: `Novo pedido ${E.pedidoId} - ${E.configDepois ? E.comprador.nome : E.unidades[0].estab}`, from_name: "Site Vitrine Viva",
         email: E.comprador.email, name: E.comprador.nome, botcheck: form.querySelector("[name=botcheck]")?.value || "", message: textoPedido(),
       }),
     });
@@ -403,7 +436,7 @@
     const v = valores();
     const r = await comTempo(`${C.pagamentoApi}/pagamento`, {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ pedido: E.pedidoId, itens: v.itens, totalExibido: v.total }),
+      body: JSON.stringify({ pedido: E.pedidoId, itens: v.itens, configDepois: E.configDepois, totalExibido: v.total }),
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok || !d.checkout_url) throw new Error(d.erro || "pagamento");
@@ -473,13 +506,23 @@
   function desenharResumo() {
     const v = valores();
     const lin = (a, b, cl) => h("div", { class: cl }, h("span", null, a), h("span", null, b));
-    if (!v) { resumo.replaceChildren(h("h3", null, "Resumo"), h("small", null, "Informe uma quantidade válida para ver os valores.")); return; }
+    if (!v) { resumo.replaceChildren(h("h3", null, "Resumo"), h("small", null, "Seu carrinho está vazio. Escolha uma placa e toque em Adicionar ao carrinho.")); return; }
+    // Na etapa de produto o carrinho é editável; redesenhar não pode tirar o foco de quem usa teclado.
+    const editavel = E.etapa === 0, focoAntes = resumo.contains(document.activeElement) ? document.activeElement.dataset.foco : null, cheio = v.q >= C.qtdMaxima;
+    const botao = (i, sinal, novo, rotulo, inativo) => h("button", { type: "button", "data-foco": `${sinal}${i.id}`, "aria-label": `${rotulo}: ${rotuloModelo(i.id)}`, disabled: inativo, on: { click: () => mudarNoCarrinho(i.id, novo) } }, sinal);
+    const controles = (i) => h("div", { class: "vv-item-ctl" },
+      botao(i, "−", i.qtd - 1, "Diminuir quantidade", i.qtd <= (modelo(i.id).min || 1)),
+      h("span", null, i.qtd),
+      botao(i, "+", i.qtd + 1, "Aumentar quantidade", cheio),
+      h("button", { type: "button", class: "vv-link", "data-foco": `x${i.id}`, "aria-label": `Remover ${rotuloModelo(i.id)}`, on: { click: () => mudarNoCarrinho(i.id, 0) } }, "Remover"));
     resumo.replaceChildren(...[h("h3", null, "Resumo"),
-      ...v.itens.map((i) => lin(`${i.qtd} × ${rotuloModelo(i.id)}`, brl(i.qtd * modelo(i.id).preco))),
+      ...v.itens.flatMap((i) => [lin(`${i.qtd} × ${rotuloModelo(i.id)}`, brl(i.qtd * modelo(i.id).preco)), editavel ? controles(i) : null]),
+      v.desconto ? lin(`Sem configuração (−${C.descontoConfigDepois}%)`, `−${brl(v.desconto)}`, "vv-desc") : null,
       lin("Frete fixo", brl(v.frete)),
       lin("Total", brl(v.total), "tot"),
       h("small", null, C.pagamentoApi ? "Pagamento processado pelo Mercado Pago, em ambiente próprio." : "O pagamento é combinado depois do envio do pedido."),
     ].filter(Boolean));
+    if (focoAntes) { const f = resumo.querySelector(`[data-foco="${CSS.escape(focoAntes)}"]`); if (f && !f.disabled) f.focus(); }
   }
   function desenhar() {
     etapas.replaceChildren(...ETAPAS.map((t, i) => h("li", { class: i < E.etapa ? "feita" : i === E.etapa ? "atual" : "", "aria-current": i === E.etapa ? "step" : null }, t)));
@@ -564,6 +607,7 @@
 
   // Pedido já enviado ou com painel perdido no recarregamento volta à revisão, sem reenviar e-mail.
   if (E.etapa === 4 && !E.emailEnviado) E.etapa = 3;
+  if (!E.carrinho.length) E.etapa = 0;
   ajustarUnidades();
   // Recarregou: mantém a entrada atual. Voltou ao site sem histórico: recria as etapas anteriores.
   if (histNoPedido()) history.replaceState(marcaHist(E.etapa), "");

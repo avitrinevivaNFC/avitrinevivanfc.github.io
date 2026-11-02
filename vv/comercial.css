@@ -148,6 +148,21 @@ html.vv-sem3d #root { display: none; }
   .vv-sec.vv-compra { max-width: 100rem; }
   .vv-compra-grade { gap: 2.5rem; }
 }
+/* Carrinho */
+.vv-add { display: block; width: 100%; margin-top: 1rem; }
+.vv-add-msg { margin-top: .5rem; font-size: .85rem; color: #1e7e34; }
+.vv-add-msg:empty { display: none; }
+#vv-form .vv-add-msg + .vv-aviso { margin-top: 1rem; }
+.vv-resumo div.vv-item-ctl { justify-content: flex-start; align-items: center; gap: .5rem; padding: 0 0 .6rem; }
+.vv-item-ctl button:not(.vv-link) { width: 2rem; height: 2rem; border: 1px solid #1a1a1a59; border-radius: 6px; background: #fff; color: #1a1a1a; cursor: pointer; }
+.vv-item-ctl button:disabled { opacity: .35; cursor: default; }
+.vv-item-ctl span { min-width: 1.5rem; text-align: center; }
+.vv-item-ctl .vv-link { margin: 0 0 0 auto; font-size: .82rem; }
+.vv-resumo div.vv-desc { color: #1e7e34; }
+.vv-modo { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 560px) { .vv-modo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.vv-modo .vv-op { position: relative; text-align: left; font-weight: 400; }
+.vv-modo .vv-op b { display: block; font-weight: 600; }
 .vv-op-preco { display: block; margin-top: .3rem; }
 .vv-op-info { display: block; margin-top: .2rem; font-size: .76rem; font-weight: 400; opacity: .75; }
 .vv-sem-foto { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 7.5rem; height: 7.5rem; margin: 0 auto .4rem; border: 1px dashed #1a1a1a40; border-radius: 6px; font-size: .78rem; opacity: .7; }
