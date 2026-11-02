@@ -11,14 +11,16 @@
   const TODOS = "todos"; // aba inicial: mostra o catálogo inteiro
   const novoEstado = () => ({
     etapa: 0, cat: TODOS, modelo: C.modelos[0].id, qtd: "1", distintas: false,
-    unidades: [novaUnidade(C.modelos[0].id)], comprador: { pais: "Brasil" }, pedidoId: null, emailEnviado: false,
+    unidades: [novaUnidade(C.modelos[0].id)], comprador: { pais: "Brasil" }, pedidoId: null, emailEnviado: false, ord: novoOrd(),
   });
+  function novoOrd() { return Math.random().toString(36).slice(2, 10); }
   function novaUnidade(m) { return { modelo: m, estab: "", google: "", nfc: "", qr: "", extra: "", obs: "" }; }
 
   let E;
   try { E = JSON.parse(sessionStorage.getItem(CHAVE)) || novoEstado(); } catch { E = novoEstado(); }
   if (!modelo(E.modelo) || !E.unidades.every((u) => modelo(u.modelo))) E = novoEstado(); // modelo saiu do catálogo
   if (E.cat !== TODOS) E.cat = modelo(E.modelo).cat; // pedidos em andamento salvos antes das categorias
+  if (!E.ord) E.ord = novoOrd(); // pedido em andamento salvo antes do histórico por etapa
   const salvar = () => { try { sessionStorage.setItem(CHAVE, JSON.stringify(E)); } catch { /* navegação privada */ } };
 
   /* Sem WebGL acelerado a cena 3D não abre: libera a rolagem e mostra a apresentação estática */
@@ -134,10 +136,37 @@
   }
 
   /* Etapas */
+  const irAoFormulario = () => document.getElementById("comprar").scrollIntoView({ block: "start" });
+  /* Histórico: cada etapa é uma entrada, para a seta de voltar do celular andar uma etapa por vez */
+  const marcaHist = (n) => ({ vvEtapa: n, vvOrd: E.ord });
+  const histNoPedido = () => history.state && history.state.vvOrd === E.ord;
+  let voltandoPara = null; // botão VOLTAR do site em andamento: entradas de âncora no caminho são puladas
   function vaiPara(n) {
-    E.etapa = n; salvar(); desenhar();
-    document.getElementById("comprar").scrollIntoView({ block: "start" });
+    if (n < E.etapa && histNoPedido() && history.state.vvEtapa === E.etapa) {
+      voltandoPara = n; history.go(n - E.etapa); return; // quem desenha é o popstate
+    }
+    const avancou = n > E.etapa;
+    E.etapa = n; salvar();
+    history[avancou ? "pushState" : "replaceState"](marcaHist(n), "");
+    desenhar(); irAoFormulario();
   }
+  window.addEventListener("popstate", (ev) => {
+    const s = ev.state, alvo = s && s.vvOrd === E.ord ? s.vvEtapa : 0; // entrada sem etapa ou de pedido antigo: início
+    if (alvo === E.etapa) { if (voltandoPara != null && alvo > voltandoPara) history.back(); else voltandoPara = null; return; }
+    voltandoPara = null;
+    Object.keys(erros).forEach((k) => delete erros[k]);
+    if (alvo > E.etapa) { // seta de avançar do navegador não pula a validação nem o envio
+      for (let i = E.etapa; i < alvo && i < 4; i++) {
+        if (!validar(i)) { E.etapa = i; salvar(); history.go(i - alvo); desenhar(); irAoFormulario(); return; }
+      }
+      ajustarUnidades();
+      if (alvo === 4) { confirmar(); irAoFormulario(); return; }
+    }
+    if (alvo < 4) painel = null;
+    E.etapa = alvo; salvar(); desenhar(); irAoFormulario();
+  });
+  // Link com âncora cria entrada sem estado: ela fica na etapa em que o cliente estava.
+  window.addEventListener("hashchange", () => { if (!history.state) history.replaceState(marcaHist(E.etapa), ""); });
   function acoes(voltar, avancarTxt) {
     return h("div", { class: "vv-acoes" },
       voltar != null ? h("button", { type: "button", class: "vv-btn sec", on: { click: () => { Object.keys(erros).forEach((k) => delete erros[k]); vaiPara(voltar); } } }, "VOLTAR") : null,
@@ -350,13 +379,18 @@
     E.pedidoId = E.pedidoId || gerarId();
     salvar();
     painel = { tipo: "enviando" };
-    E.etapa = 4; desenhar();
+    if (!(histNoPedido() && history.state.vvEtapa === 4)) history.pushState(marcaHist(4), "");
+    E.etapa = 4; salvar(); desenhar();
     try {
+      // Voltou com a seta e alterou o pedido: a equipe precisa receber a versão corrigida.
+      const assinatura = textoPedido().replace(/^Data: .*$/m, "");
+      if (E.emailEnviado && E.assinatura && E.assinatura !== assinatura) E.emailEnviado = false;
       if (!C.web3formsKey) { painel = { tipo: "whatsapp" }; return; }
       if (!E.emailEnviado) {
         try { await enviarEmail(); } catch { painel = { tipo: "erroEmail" }; return; }
-        E.emailEnviado = true; salvar();
-        if (window.fbq) window.fbq("track", "Lead");
+        E.emailEnviado = true; E.assinatura = assinatura;
+        if (window.fbq && !E.leadEnviado) window.fbq("track", "Lead");
+        E.leadEnviado = true; salvar();
       }
       if (!C.pagamentoApi) { painel = { tipo: "semPagamento" }; return; }
       try { urlPagamento = await criarPagamento(); painel = { tipo: "pagar" }; }
@@ -394,6 +428,7 @@
   function novoPedido() {
     E = novoEstado(); painel = null; urlPagamento = null;
     try { sessionStorage.removeItem(CHAVE); } catch { /* */ }
+    history.replaceState(marcaHist(0), "");
     desenhar();
   }
 
@@ -488,6 +523,12 @@
   // Pedido já enviado ou com painel perdido no recarregamento volta à revisão, sem reenviar e-mail.
   if (E.etapa === 4 && !E.emailEnviado) E.etapa = 3;
   ajustarUnidades();
+  // Recarregou: mantém a entrada atual. Voltou ao site sem histórico: recria as etapas anteriores.
+  if (histNoPedido()) history.replaceState(marcaHist(E.etapa), "");
+  else {
+    history.replaceState(marcaHist(0), "");
+    for (let i = 1; i <= E.etapa; i++) history.pushState(marcaHist(i), "");
+  }
   desenhar();
   if (E.etapa === 4) confirmar();
 })();
