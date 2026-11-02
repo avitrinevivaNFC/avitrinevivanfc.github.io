@@ -21,11 +21,13 @@
   if (E.cat !== TODOS) E.cat = modelo(E.modelo).cat; // pedidos em andamento salvos antes das categorias
   const salvar = () => { try { sessionStorage.setItem(CHAVE, JSON.stringify(E)); } catch { /* navegação privada */ } };
 
-  /* Sem WebGL a cena 3D não abre: libera a rolagem e mostra a apresentação estática */
+  /* Sem WebGL acelerado a cena 3D não abre: libera a rolagem e mostra a apresentação estática */
   (function semWebgl() {
     const tela = document.createElement("canvas");
     let ok = false;
-    try { ok = !!(tela.getContext("webgl2") || tela.getContext("webgl")); } catch { /* sem suporte */ }
+    // Sem aceleração de vídeo o 3D travaria o aparelho: esses recebem a versão estática, leve.
+    const op = { failIfMajorPerformanceCaveat: true };
+    try { ok = !!(tela.getContext("webgl2", op) || tela.getContext("webgl", op)); } catch { /* sem suporte */ }
     if (ok) return;
     document.documentElement.classList.add("vv-sem3d");
     document.getElementById("vv-estatico").hidden = false;
@@ -157,7 +159,7 @@
         lista.map((m) => h("label", { class: "vv-op" },
           h("input", { type: "radio", name: "modelo", value: m.id, checked: m.id === E.modelo, on: { change: () => {
             const antes = E.qtd; escolherModelo(m.id); if (E.qtd !== antes) desenhar(); else desenharResumo(); } } }),
-          m.img ? h("img", { src: m.img, alt: "", loading: "lazy" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
+          m.img ? h("img", { src: m.img, alt: "", loading: "lazy", decoding: "async", width: "120", height: "120" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
           m.label,
           h("b", { class: "vv-op-preco" }, brl(m.preco)),
           [m.tam, m.min > 1 ? `Mínimo de ${m.min} unidades` : null, m.nota].filter(Boolean).map((t) => h("small", { class: "vv-op-info" }, t))))),
@@ -181,7 +183,12 @@
     if (!E.distintas && (atual < min || (minAnterior > 1 && atual === minAnterior))) { E.qtd = String(min); delete erros.qtd; }
     ajustarUnidades(); salvar();
   }
-  function mudaQtd(n) { E.qtd = String(n); delete erros.qtd; ajustarUnidades(); salvar(); desenhar(); }
+  function mudaQtd(n) {
+    const tinhaErro = !!erros.qtd, campo = document.getElementById("qtd");
+    E.qtd = String(n); delete erros.qtd; ajustarUnidades(); salvar();
+    // Só muda o número: redesenhar o formulário recriaria os 50 cartões do catálogo.
+    if (!tinhaErro && E.etapa === 0 && campo) { campo.value = E.qtd; desenharResumo(); } else desenhar();
+  }
 
   function blocoUnidade(u, i) {
     const p = `u${i}-`, set = (k) => (v) => { u[k] = v; };
