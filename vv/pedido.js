@@ -50,6 +50,11 @@
   const qtdValida = () => /^\d+$/.test(E.qtd) && +E.qtd >= 1 && +E.qtd <= C.qtdMaxima;
   const totalUnidades = () => E.carrinho.reduce((t, i) => t + i.qtd, 0);
   const noCarrinho = (id) => E.carrinho.find((i) => i.id === id);
+  /* Oferta relâmpago: essas placas vão direto ao endereço, sem configuração por nós. */
+  const itensConfig = () => E.carrinho.filter((i) => !modelo(i.id).oferta);
+  const itensOferta = () => E.carrinho.filter((i) => modelo(i.id).oferta);
+  const unidadesConfig = () => itensConfig().reduce((t, i) => t + i.qtd, 0);
+  const soOferta = () => E.carrinho.length > 0 && !itensConfig().length;
   /* O Worker recalcula o mesmo total. A conta é em centavos e o desconto vale por unidade, como na cobrança. */
   function valores() {
     if (!E.carrinho.length) return null;
@@ -130,8 +135,9 @@
 
   /* Monta a lista de configurações a partir do carrinho, aproveitando o que já foi preenchido */
   function ajustarUnidades() {
-    if (totalUnidades() <= 1) E.distintas = false;
-    const ids = E.distintas ? E.carrinho.flatMap((i) => Array(i.qtd).fill(i.id)) : [E.carrinho[0] ? E.carrinho[0].id : E.modelo];
+    if (unidadesConfig() <= 1) E.distintas = false;
+    const cfg = itensConfig();
+    const ids = E.distintas ? cfg.flatMap((i) => Array(i.qtd).fill(i.id)) : cfg.length ? [cfg[0].id] : [];
     const antigas = [...E.unidades];
     E.unidades = ids.map((id) => {
       const k = antigas.findIndex((u) => u.modelo === id);
@@ -171,7 +177,9 @@
   let voltandoPara = null; // botão VOLTAR do site em andamento: entradas de âncora no caminho são puladas
   function vaiPara(n) {
     if (n < E.etapa && histNoPedido() && history.state.vvEtapa === E.etapa) {
-      voltandoPara = n; history.go(n - E.etapa); return; // quem desenha é o popstate
+      // Só oferta relâmpago: a Personalização é pulada e não tem entrada no histórico.
+      const entrada = (k) => k - (soOferta() && k >= 2 ? 1 : 0);
+      voltandoPara = n; history.go(entrada(n) - entrada(E.etapa)); return; // quem desenha é o popstate
     }
     const avancou = n > E.etapa;
     E.etapa = n; salvar();
@@ -295,7 +303,7 @@
       if (v) { u[k] = v; document.getElementById(p + k).value = v; salvar(); } else document.getElementById(p + "google").focus();
     } } }, "Usar o link do Google");
     return h("div", { class: "vv-unidade" },
-      E.distintas ? h("h4", null, `Placa ${i + 1} de ${totalUnidades()}: ${rotuloModelo(u.modelo)}`) : null,
+      E.distintas ? h("h4", null, `Placa ${i + 1} de ${unidadesConfig()}: ${rotuloModelo(u.modelo)}`) : null,
       campo("Nome do estabelecimento", p + "estab", u.estab, set("estab"), { max: 120 }),
       campo("Link da página de avaliações do Google", p + "google", u.google, set("google"), { opcional: true, tipo: "url", modo: "url", ph: "https://g.page/r/..." }),
       campo("Destino do NFC", p + "nfc", u.nfc, set("nfc"), { tipo: "url", modo: "url", ph: "https://" }), usarGoogle("nfc"),
@@ -305,17 +313,21 @@
       campo("Instagram, cardápio, iFood ou outro canal", p + "extra", u.extra, set("extra"), { opcional: true, max: 300 }),
       campo("Observações sobre a configuração", p + "obs", u.obs, set("obs"), { opcional: true, area: true, max: 1000 }));
   }
+  const nomesOferta = () => itensOferta().map((i) => `${i.qtd} × ${rotuloModelo(i.id)}`).join("; ");
+  const avisoOferta = () => itensOferta().length ? h("p", { class: "vv-aviso" },
+    `Oferta relâmpago (${nomesOferta()}): vai direto para o seu endereço, sem configuração por nós. Você configura ao receber, com as orientações que enviamos por mensagem no despacho. O preço de R$ 39,99 já é o final: o desconto de ${C.descontoConfigDepois}% não se aplica a ela.`) : null;
   function etapaPersonalizacao() {
-    const n = totalUnidades(), modo = (depois, titulo, texto) => h("label", { class: "vv-op" },
+    const n = unidadesConfig(), modo = (depois, titulo, texto) => h("label", { class: "vv-op" },
       h("input", { type: "radio", name: "personalizar", checked: E.configDepois === depois, on: { change: () => {
         E.configDepois = depois; Object.keys(erros).forEach((k) => delete erros[k]); salvar(); desenhar(); } } }),
       h("b", null, titulo), h("small", { class: "vv-op-info" }, texto));
     return [
       h("h3", null, "Personalização"),
-      h("fieldset", { class: "vv-opcoes vv-modo" }, h("legend", null, "Como quer receber as placas?"),
+      avisoOferta(),
+      soOferta() ? [] : h("fieldset", { class: "vv-opcoes vv-modo" }, h("legend", null, "Como quer receber as placas?"),
         modo(false, "Receber configurada por nós", "Informe seus links agora e receba pronta para usar."),
-        modo(true, `Receber em casa sem configuração: ${C.descontoConfigDepois}% de desconto nas placas`, "Não fazemos a configuração: você personaliza pessoalmente quando a placa chegar, com as orientações que enviamos por mensagem no despacho.")),
-      E.configDepois ? h("p", { class: "vv-aviso" }, `Você não precisa informar links agora. O desconto de ${C.descontoConfigDepois}% sobre as placas (etiquetas NFC não entram) já aparece no resumo; o frete não entra no desconto.`) : [
+        modo(true, `Receber em casa sem configuração: ${C.descontoConfigDepois}% de desconto nas placas${itensOferta().length ? " fora da oferta relâmpago" : ""}`, "Não fazemos a configuração: você personaliza pessoalmente quando a placa chegar, com as orientações que enviamos por mensagem no despacho.")),
+      soOferta() ? [] : E.configDepois ? h("p", { class: "vv-aviso" }, `Você não precisa informar links agora. O desconto de ${C.descontoConfigDepois}% sobre as placas (etiquetas NFC e oferta relâmpago não entram) já aparece no resumo; o frete não entra no desconto.`) : [
         n > 1 ? h("label", { class: "vv-check" },
           h("input", { type: "checkbox", checked: E.distintas, on: { change: (e) => { E.distintas = e.target.checked; ajustarUnidades(); salvar(); desenhar(); } } }),
           h("span", null, `Estas ${n} placas têm estabelecimentos ou links diferentes`)) : null,
@@ -365,7 +377,8 @@
         campo("Estado", "uf", c.uf, set("uf"), { opcoes: UFS, auto: "address-level1" })),
       campo("País", "pais", c.pais, set("pais"), { auto: "country-name", max: 60 }),
       h("p", { class: "vv-aviso" }, `Frete fixo de ${brl(C.frete)} por pedido.`),
-      acoes(1, "REVISAR PEDIDO"),
+      soOferta() ? avisoOferta() : null,
+      acoes(soOferta() ? 0 : 1, "REVISAR PEDIDO"),
     ];
   }
 
@@ -382,7 +395,8 @@
       h("h3", null, "Revise o seu pedido"),
       h("dl", { class: "vv-rev" },
         par("Placas", E.carrinho.map((i) => `${i.qtd} × ${rotuloModelo(i.id)}`).join("; ")),
-        E.configDepois ? par("Personalização", `Receber em casa sem configuração (${C.descontoConfigDepois}% de desconto)`) : E.unidades.map((u, i) => [
+        itensOferta().length ? par("Oferta relâmpago", `${nomesOferta()}: enviada sem configuração, você configura ao receber`) : [],
+        soOferta() ? [] : E.configDepois ? par("Personalização", `Receber em casa sem configuração (${C.descontoConfigDepois}% de desconto)`) : E.unidades.map((u, i) => [
           par(E.distintas ? `Placa ${i + 1}` : "Estabelecimento", E.distintas ? `${u.estab} · ${rotuloModelo(u.modelo)}` : u.estab),
           par("Avaliações do Google", u.google), par("NFC", u.nfc), par("QR Code", u.qr), par("Outros canais", u.extra), par("Observações", u.obs),
         ]).flat(),
@@ -399,9 +413,10 @@
       `COMPRADOR`, `${c.nome}`, `E-mail: ${c.email}`, `Telefone: ${c.fone}`, "",
       `ENTREGA`, enderecoTexto(), "",
       `PRODUTO`, ...v.itens.map((i) => `${i.qtd} × ${rotuloModelo(i.id)}: ${brl(i.qtd * modelo(i.id).preco)}`),
-      E.configDepois ? `ENVIAR SEM CONFIGURAR: o cliente personaliza pessoalmente ao receber (${C.descontoConfigDepois}% de desconto). Mandar as orientações pelos canais de comunicação ao despachar.` : E.distintas ? "Placas com configurações diferentes:" : "Mesmos dados para todas as unidades.",
+      ...(itensOferta().length ? [`OFERTA RELÂMPAGO, ENVIAR SEM CONFIGURAR: ${nomesOferta()}. O cliente configura ao receber; mandar as orientações ao despachar.`] : []),
+      soOferta() ? "" : E.configDepois ? `ENVIAR SEM CONFIGURAR: o cliente personaliza pessoalmente ao receber (${C.descontoConfigDepois}% de desconto). Mandar as orientações pelos canais de comunicação ao despachar.` : E.distintas ? "Placas com configurações diferentes:" : "Mesmos dados para todas as unidades.",
     ];
-    if (!E.configDepois) E.unidades.forEach((u, i) => {
+    if (!E.configDepois && !soOferta()) E.unidades.forEach((u, i) => {
       linhas.push("", E.distintas ? `PLACA ${i + 1}: ${rotuloModelo(u.modelo)}` : "CONFIGURAÇÃO", `Estabelecimento: ${u.estab}`);
       if (u.google) linhas.push(`Google: ${normalizaUrl(u.google)}`);
       linhas.push(`NFC: ${normalizaUrl(u.nfc)}`, `QR Code: ${normalizaUrl(u.qr)}`);
@@ -432,7 +447,7 @@
     const r = await comTempo("https://api.web3forms.com/submit", {
       method: "POST", headers: { "content-type": "application/json", accept: "application/json" },
       body: JSON.stringify({
-        access_key: C.web3formsKey, subject: `Novo pedido ${E.pedidoId} - ${E.configDepois ? E.comprador.nome : E.unidades[0].estab}`, from_name: "Site Vitrine Viva",
+        access_key: C.web3formsKey, subject: `Novo pedido ${E.pedidoId} - ${E.configDepois || !E.unidades.length ? E.comprador.nome : E.unidades[0].estab}`, from_name: "Site Vitrine Viva",
         email: E.comprador.email, name: E.comprador.nome, botcheck: form.querySelector("[name=botcheck]")?.value || "", message: textoPedido(),
       }),
     });
@@ -553,7 +568,7 @@
     ev.preventDefault();
     if (E.etapa === 3) return void confirmar();
     if (E.etapa > 3) return;
-    if (validar(E.etapa)) { ajustarUnidades(); vaiPara(E.etapa + 1); return; }
+    if (validar(E.etapa)) { ajustarUnidades(); vaiPara(E.etapa === 0 && soOferta() ? 2 : E.etapa + 1); return; }
     desenhar();
     const prim = form.querySelector('[aria-invalid="true"]');
     if (prim) prim.focus();
@@ -625,7 +640,7 @@
   if (histNoPedido()) history.replaceState(marcaHist(E.etapa), "");
   else {
     history.replaceState(marcaHist(0), "");
-    for (let i = 1; i <= E.etapa; i++) history.pushState(marcaHist(i), "");
+    for (let i = 1; i <= E.etapa; i++) if (!(i === 1 && soOferta())) history.pushState(marcaHist(i), "");
   }
   desenhar();
   if (E.etapa === 4) confirmar();

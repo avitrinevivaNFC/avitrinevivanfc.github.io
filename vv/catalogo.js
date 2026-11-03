@@ -55,7 +55,7 @@ window.VV_CATALOGO = {
    "tam": "14 x 10 cm",
    "oferta": true,
    "semDescontoConfig": true,
-   "nota": "Oferta relâmpago: R$ 39,99 enquanto durarem os estoques."
+   "nota": "Oferta relâmpago: R$ 39,99 enquanto durarem os estoques. Vai direto para o seu endereço, sem configuração: você configura ao receber, com as orientações que enviamos."
   },
   {
    "id": "mesa-preta-14",
@@ -68,7 +68,7 @@ window.VV_CATALOGO = {
    "tam": "14 x 10 cm",
    "oferta": true,
    "semDescontoConfig": true,
-   "nota": "Oferta relâmpago: R$ 39,99 enquanto durarem os estoques."
+   "nota": "Oferta relâmpago: R$ 39,99 enquanto durarem os estoques. Vai direto para o seu endereço, sem configuração: você configura ao receber, com as orientações que enviamos."
   },
   {
    "id": "acrilico-l",
