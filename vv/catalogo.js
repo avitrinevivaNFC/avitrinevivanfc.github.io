@@ -48,7 +48,7 @@ window.VV_CATALOGO = {
    "label": "Acrílico",
    "cat": "google",
    "preco": 79,
-   "precoDe": 99,
+   "precoDe": 150,
    "img": "vv/img/placa-branca.webp",
    "cor": "Branca"
   },
@@ -57,7 +57,7 @@ window.VV_CATALOGO = {
    "label": "Quadrada",
    "cat": "google",
    "preco": 79,
-   "precoDe": 99,
+   "precoDe": 150,
    "img": "vv/img/placa-quadrada.webp",
    "cor": "Branca"
   },
@@ -66,7 +66,7 @@ window.VV_CATALOGO = {
    "label": "Avalie-nos",
    "cat": "google",
    "preco": 79,
-   "precoDe": 99,
+   "precoDe": 150,
    "img": "vv/img/placa-preta.webp",
    "cor": "Preta"
   },
@@ -75,7 +75,7 @@ window.VV_CATALOGO = {
    "label": "Preta Cores",
    "cat": "google",
    "preco": 79,
-   "precoDe": 99,
+   "precoDe": 150,
    "img": "vv/img/placa-preta-cores.webp",
    "cor": "Preta"
   },
@@ -84,7 +84,7 @@ window.VV_CATALOGO = {
    "label": "Google 3D Preta e Dourada",
    "cat": "google",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/google-preta-dourada.webp"
   },
   {
@@ -92,7 +92,7 @@ window.VV_CATALOGO = {
    "label": "Google 3D Rosa",
    "cat": "google",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/google-rosa.webp",
    "tam": "12 x 8 cm"
   },
@@ -101,7 +101,7 @@ window.VV_CATALOGO = {
    "label": "Google Branca NFC",
    "cat": "google",
    "preco": 85,
-   "precoDe": 106,
+   "precoDe": 161,
    "img": "vv/img/cat/google-branca-nfc.webp",
    "tam": "12 x 10 cm"
   },
@@ -110,7 +110,7 @@ window.VV_CATALOGO = {
    "label": "Google Preta NFC",
    "cat": "google",
    "preco": 85,
-   "precoDe": 106,
+   "precoDe": 161,
    "img": "vv/img/cat/google-preta-nfc.webp",
    "tam": "12 x 10 cm"
   },
@@ -119,7 +119,7 @@ window.VV_CATALOGO = {
    "label": "Mesa NFC + QR Code",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/mesa-nfc-qr.webp",
    "tam": "12 x 10 cm"
   },
@@ -128,7 +128,7 @@ window.VV_CATALOGO = {
    "label": "Acrílico Ouro",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/acrilico-ouro.webp"
   },
   {
@@ -136,7 +136,7 @@ window.VV_CATALOGO = {
    "label": "Google Branca NFC + QR Code",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/google-branca.webp"
   },
   {
@@ -144,7 +144,7 @@ window.VV_CATALOGO = {
    "label": "Google Preta NFC + QR Code",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/google-preta.webp"
   },
   {
@@ -152,7 +152,7 @@ window.VV_CATALOGO = {
    "label": "Edição de Natal",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/natal.webp"
   },
   {
@@ -160,7 +160,7 @@ window.VV_CATALOGO = {
    "label": "Parede 3D com dupla face",
    "cat": "google",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/parede-3d.webp",
    "tam": "12 x 8 cm"
   },
@@ -169,7 +169,7 @@ window.VV_CATALOGO = {
    "label": "Premium Gold 3D",
    "cat": "google",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/premium-gold.webp",
    "tam": "10 x 8 cm"
   },
@@ -178,7 +178,7 @@ window.VV_CATALOGO = {
    "label": "Premium 3D Branca",
    "cat": "google",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/premium-branca.webp",
    "tam": "12,5 x 8 cm"
   },
@@ -187,7 +187,7 @@ window.VV_CATALOGO = {
    "label": "Mesa NFC Preta",
    "cat": "google",
    "preco": 84,
-   "precoDe": 105,
+   "precoDe": 159,
    "img": "vv/img/cat/mesa-preta.webp",
    "tam": "12 x 10 cm"
   },
@@ -196,7 +196,7 @@ window.VV_CATALOGO = {
    "label": "Mesa NFC Azul",
    "cat": "google",
    "preco": 84,
-   "precoDe": 105,
+   "precoDe": 159,
    "img": "vv/img/cat/mesa-azul.webp",
    "tam": "12 x 10 cm"
   },
@@ -205,7 +205,7 @@ window.VV_CATALOGO = {
    "label": "Mesa NFC + QR Code Azul",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/mesa-qr-azul.webp",
    "tam": "12 x 10 cm"
   },
@@ -214,7 +214,7 @@ window.VV_CATALOGO = {
    "label": "Mesa NFC + QR Code Preta",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/mesa-qr-preta.webp",
    "tam": "12 x 10 cm"
   },
@@ -223,7 +223,7 @@ window.VV_CATALOGO = {
    "label": "Mesa NFC Branca",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/mesa-branca.webp",
    "tam": "14 x 10 cm"
   },
@@ -232,7 +232,7 @@ window.VV_CATALOGO = {
    "label": "Mesa NFC Preta 14 cm",
    "cat": "google",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/mesa-preta-14.webp",
    "tam": "14 x 10 cm"
   },
@@ -241,7 +241,7 @@ window.VV_CATALOGO = {
    "label": "Alta Branca NFC + QR Code",
    "cat": "google",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/alta-branca-qr.webp"
   },
   {
@@ -249,7 +249,7 @@ window.VV_CATALOGO = {
    "label": "Alta Preta NFC + QR Code",
    "cat": "google",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/alta-preta-qr.webp"
   },
   {
@@ -257,7 +257,7 @@ window.VV_CATALOGO = {
    "label": "Pix 3D Branca",
    "cat": "pix",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/pix-3d.webp",
    "tam": "12 x 8 cm"
   },
@@ -266,7 +266,7 @@ window.VV_CATALOGO = {
    "label": "Pix 3D Preta",
    "cat": "pix",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/pix-3d-preta.webp",
    "tam": "12 x 8 cm"
   },
@@ -275,7 +275,7 @@ window.VV_CATALOGO = {
    "label": "Pix 3D Dourada",
    "cat": "pix",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/pix-3d-dourada.webp"
   },
   {
@@ -283,7 +283,7 @@ window.VV_CATALOGO = {
    "label": "Wi-Fi NFC + QR Code",
    "cat": "wifi",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/wifi.webp"
   },
   {
@@ -291,7 +291,7 @@ window.VV_CATALOGO = {
    "label": "Wi-Fi 3D Preta",
    "cat": "wifi",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/wifi-3d-preta.webp",
    "tam": "10 x 8 cm"
   },
@@ -300,7 +300,7 @@ window.VV_CATALOGO = {
    "label": "Wi-Fi 3D Branca",
    "cat": "wifi",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/wifi-3d-branca.webp",
    "tam": "10 x 8 cm"
   },
@@ -309,7 +309,7 @@ window.VV_CATALOGO = {
    "label": "Instagram NFC + QR Code",
    "cat": "instagram",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/instagram-nfc-qr.webp"
   },
   {
@@ -317,7 +317,7 @@ window.VV_CATALOGO = {
    "label": "Instagram Branca NFC + QR Code",
    "cat": "instagram",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/instagram-branca.webp"
   },
   {
@@ -325,7 +325,7 @@ window.VV_CATALOGO = {
    "label": "Instagram 3D Branca",
    "cat": "instagram",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/instagram-3d-branca.webp",
    "tam": "10 x 8 cm"
   },
@@ -334,7 +334,7 @@ window.VV_CATALOGO = {
    "label": "Instagram 3D Preta",
    "cat": "instagram",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/instagram-3d-preta.webp",
    "tam": "10 x 8 cm"
   },
@@ -343,7 +343,7 @@ window.VV_CATALOGO = {
    "label": "Cartão de visita Instagram",
    "cat": "instagram",
    "preco": 81,
-   "precoDe": 101,
+   "precoDe": 153,
    "img": "vv/img/cat/cartao-instagram.webp",
    "tam": "6 x 9 cm",
    "nota": "Frente e verso, com QR Code dinâmico. Estoque limitado."
@@ -353,7 +353,7 @@ window.VV_CATALOGO = {
    "label": "WhatsApp 3D Preta",
    "cat": "whatsapp",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/whatsapp-3d-preta.webp",
    "tam": "12 x 8 cm"
   },
@@ -362,7 +362,7 @@ window.VV_CATALOGO = {
    "label": "WhatsApp 3D Branca",
    "cat": "whatsapp",
    "preco": 88,
-   "precoDe": 110,
+   "precoDe": 167,
    "img": "vv/img/cat/whatsapp-3d-branca.webp",
    "tam": "12 x 8 cm"
   },
@@ -371,7 +371,7 @@ window.VV_CATALOGO = {
    "label": "3 em 1 de parede Branca",
    "cat": "combo",
    "preco": 112,
-   "precoDe": 140,
+   "precoDe": 212,
    "img": "vv/img/cat/3em1-parede-branca.webp",
    "nota": "Sob encomenda: envio em até 48 h após o pagamento."
   },
@@ -380,7 +380,7 @@ window.VV_CATALOGO = {
    "label": "3 em 1 de parede Preta",
    "cat": "combo",
    "preco": 112,
-   "precoDe": 140,
+   "precoDe": 212,
    "img": "vv/img/cat/3em1-parede-preta.webp",
    "nota": "Sob encomenda: envio em até 48 h após o pagamento."
   },
@@ -389,7 +389,7 @@ window.VV_CATALOGO = {
    "label": "3 em 1 3D de mesa Preta",
    "cat": "combo",
    "preco": 116,
-   "precoDe": 145,
+   "precoDe": 220,
    "img": "vv/img/cat/3em1-3d-preta.webp",
    "nota": "Sob encomenda: envio em até 48 h após o pagamento."
   },
@@ -398,7 +398,7 @@ window.VV_CATALOGO = {
    "label": "3 em 1 3D de mesa Branca",
    "cat": "combo",
    "preco": 116,
-   "precoDe": 145,
+   "precoDe": 220,
    "img": "vv/img/cat/3em1-3d-branca.webp",
    "nota": "Sob encomenda: envio em até 48 h após o pagamento."
   },
@@ -407,7 +407,7 @@ window.VV_CATALOGO = {
    "label": "Hospedagem: reserve pelo WhatsApp",
    "cat": "servicos",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/airbnb.webp",
    "tam": "12 x 10 cm"
   },
@@ -416,7 +416,7 @@ window.VV_CATALOGO = {
    "label": "Motorista: agende pelo WhatsApp",
    "cat": "servicos",
    "preco": 85,
-   "precoDe": 107,
+   "precoDe": 162,
    "img": "vv/img/cat/uber.webp",
    "tam": "12 x 10 cm"
   },
@@ -425,7 +425,7 @@ window.VV_CATALOGO = {
    "label": "Kit Cesta Preta",
    "cat": "cestas",
    "preco": 124,
-   "precoDe": 155,
+   "precoDe": 235,
    "img": "vv/img/cat/kit-cesta-preta.webp",
    "nota": "Inclui cestinha organizadora, placa Google com NFC e haste removível."
   },
@@ -434,7 +434,7 @@ window.VV_CATALOGO = {
    "label": "Kit Cesta Ouro",
    "cat": "cestas",
    "preco": 124,
-   "precoDe": 155,
+   "precoDe": 235,
    "img": "vv/img/cat/kit-cesta-ouro.webp",
    "nota": "Inclui cestinha organizadora, placa Google com NFC e haste removível."
   },
@@ -443,7 +443,7 @@ window.VV_CATALOGO = {
    "label": "Etiquetas NFC regraváveis antimetal, 30 un.",
    "cat": "kits",
    "preco": 128,
-   "precoDe": 160,
+   "precoDe": 242,
    "img": "vv/img/cat/etiquetas-30.webp",
    "semDescontoConfig": true
   },
@@ -452,7 +452,7 @@ window.VV_CATALOGO = {
    "label": "Etiquetas NFC regraváveis antimetal, 50 un.",
    "cat": "kits",
    "preco": 168,
-   "precoDe": 210,
+   "precoDe": 318,
    "img": "vv/img/cat/etiquetas-50.webp",
    "semDescontoConfig": true
   },
@@ -461,7 +461,7 @@ window.VV_CATALOGO = {
    "label": "Etiquetas NFC regraváveis antimetal, 100 un.",
    "cat": "kits",
    "preco": 267,
-   "precoDe": 335,
+   "precoDe": 508,
    "img": "vv/img/cat/etiquetas-100.webp",
    "semDescontoConfig": true
   },
@@ -470,7 +470,7 @@ window.VV_CATALOGO = {
    "label": "Placa Branca sem arte",
    "cat": "base",
    "preco": 81,
-   "precoDe": 102,
+   "precoDe": 155,
    "img": "vv/img/cat/sem-arte-branca.webp",
    "tam": "14 x 10 cm"
   },
@@ -479,7 +479,7 @@ window.VV_CATALOGO = {
    "label": "Placa Preta sem arte",
    "cat": "base",
    "preco": 81,
-   "precoDe": 102,
+   "precoDe": 155,
    "img": "vv/img/cat/sem-arte-preta.webp",
    "tam": "14 x 10 cm"
   }
