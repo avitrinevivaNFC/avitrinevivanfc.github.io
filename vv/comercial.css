@@ -163,6 +163,43 @@ html.vv-sem3d #root { display: none; }
 @media (min-width: 560px) { .vv-modo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .vv-modo .vv-op { position: relative; text-align: left; font-weight: 400; }
 .vv-modo .vv-op b { display: block; font-weight: 600; }
+/* Faixa da promoção */
+.vv-com-faixa .label.fixed.top-0 { top: var(--vv-faixa-h, 0); }
+.vv-com-faixa #comprar { scroll-margin-top: var(--vv-faixa-h, 0); }
+.vv-faixa {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 150; display: flex; align-items: center; justify-content: center; gap: clamp(1rem, 3vw, 2.75rem);
+  padding: .55rem 1rem; color: #fff; font: 500 .95rem/1.15 Inter, sans-serif; text-decoration: none; cursor: pointer;
+  background: linear-gradient(100deg, #b80f2e, #ec1c24 35%, #ff6a13 65%, #ec1c24); background-size: 220% 100%;
+  box-shadow: 0 3px 18px #b80f2e73; animation: vv-faixa-fundo 7s ease-in-out infinite alternate;
+}
+.vv-faixa:hover .vv-faixa-cta { transform: scale(1.05); }
+.vv-faixa:focus-visible { outline: 3px solid #fff; outline-offset: -5px; }
+.vv-faixa-oferta { display: flex; align-items: center; gap: .65rem; }
+.vv-faixa-oferta em { padding: .32rem .55rem; border-radius: 6px; background: #ffd400; color: #1a1a1a; font: 800 1.35rem/1 Inter, sans-serif; font-style: normal; transform: rotate(-3deg); }
+.vv-faixa-oferta s { opacity: .8; }
+.vv-faixa-oferta strong { font-size: 1.5rem; font-weight: 800; }
+.vv-faixa-oferta small { display: block; margin-top: .12rem; font-size: .72rem; opacity: .92; }
+.vv-faixa-tempo { display: flex; align-items: center; gap: .55rem; }
+.vv-faixa-tempo > small { font-size: .7rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.vv-faixa-nums { display: flex; gap: .28rem; }
+.vv-faixa-num { display: flex; flex-direction: column; align-items: center; min-width: 2.5rem; padding: .28rem .2rem; border-radius: 6px; background: #1a1a1a; }
+.vv-faixa-num b { font: 700 1.2rem/1 Inter, sans-serif; font-variant-numeric: tabular-nums; }
+.vv-faixa-num small { margin-top: .14rem; font-size: .54rem; letter-spacing: .05em; text-transform: uppercase; opacity: .8; }
+.vv-faixa-cta { padding: .68rem 1.15rem; border-radius: 999px; background: #fff; color: #c8102e; font-size: .85rem; font-weight: 800; white-space: nowrap; transition: transform .2s; }
+.vv-faixa-cta i { font-style: normal; }
+@keyframes vv-faixa-fundo { to { background-position: 100% 0; } }
+@media (prefers-reduced-motion: reduce) { .vv-faixa { animation: none; } }
+@media (max-width: 860px) {
+  .vv-faixa { flex-wrap: wrap; gap: .4rem .6rem; padding: .45rem .6rem; font-size: .84rem; }
+  .vv-faixa-oferta { flex: 1 1 100%; justify-content: center; }
+  .vv-faixa-oferta em { font-size: 1.05rem; }
+  .vv-faixa-oferta strong { font-size: 1.2rem; }
+  .vv-faixa-oferta small { font-size: .68rem; }
+  .vv-faixa-tempo > small { display: none; }
+  .vv-faixa-num { min-width: 2.05rem; padding: .22rem .1rem; }
+  .vv-faixa-num b { font-size: 1rem; }
+  .vv-faixa-cta { padding: .55rem .75rem; font-size: .76rem; }
+}
 .vv-op-de { display: block; margin-top: .3rem; font-size: .78rem; font-weight: 400; }
 .vv-op-de s { opacity: .6; }
 .vv-op-de em { margin-left: .15rem; color: #1e7e34; font-style: normal; font-weight: 600; }

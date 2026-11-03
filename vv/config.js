@@ -15,6 +15,7 @@ window.VV_CONFIG = {
   // Modelos e preços vêm de vv/catalogo.js, gerado por tools/catalogo.py.
   modelos: window.VV_CATALOGO.modelos,
   categorias: window.VV_CATALOGO.categorias,
+  promoFim: window.VV_CATALOGO.promoFim, // ao passar desta hora, vale o preço cheio (o Worker faz o mesmo)
 
   whatsapp: "5515936182306",
 

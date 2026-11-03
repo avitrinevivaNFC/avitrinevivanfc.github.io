@@ -2,6 +2,11 @@
 (function () {
   "use strict";
   const C = window.VV_CONFIG;
+  /* Promoção: o Worker usa a mesma hora de fim. O relógio do aparelho é corrigido se a cobrança acusar diferença. */
+  const relogio = () => { try { return Date.now() + (+sessionStorage.getItem("vv-relogio") || 0); } catch { return Date.now(); } };
+  const voltaPrecoCheio = () => C.modelos.forEach((m) => { m.preco = m.precoCheio ?? m.preco; });
+  let promoAtiva = relogio() < C.promoFim;
+  if (!promoAtiva) voltaPrecoCheio();
   const CHAVE = "vv-pedido";
   const brl = (n) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const ETAPAS = ["Produto", "Personalização", "Entrega", "Revisão", "Pagamento"];
@@ -248,7 +253,7 @@
             const antes = E.qtd; escolherModelo(m.id); mostrarNota(); if (E.qtd !== antes) desenhar(); } } }),
           m.img ? h("img", { src: m.img, alt: "", loading: "lazy", decoding: "async", width: "120", height: "120" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
           m.label,
-          m.precoDe > m.preco ? h("span", { class: "vv-op-de" }, h("s", { "aria-label": `De ${brl(m.precoDe)}` }, brl(m.precoDe)), " ", h("em", null, `−${Math.round((1 - m.preco / m.precoDe) * 100)}%`)) : null,
+          promoAtiva && m.precoDe > m.preco ? h("span", { class: "vv-op-de" }, h("s", { "aria-label": `De ${brl(m.precoDe)}` }, brl(m.precoDe)), " ", h("em", null, `−${Math.round((1 - m.preco / m.precoDe) * 100)}%`)) : null,
           h("b", { class: "vv-op-preco" }, brl(m.preco)),
           [m.tam, m.min > 1 ? `Mínimo de ${m.min} unidades` : null].filter(Boolean).map((t) => h("small", { class: "vv-op-info" }, t))))),
       nota,
@@ -440,6 +445,11 @@
       body: JSON.stringify({ pedido: E.pedidoId, itens: v.itens, configDepois: E.configDepois, totalExibido: v.total }),
     });
     const d = await r.json().catch(() => ({}));
+    if (d.erro === "total_divergente" && d.promoAtiva !== promoAtiva) { // relógio do aparelho errado ou a promoção virou agora
+      try { sessionStorage.setItem("vv-relogio", String(d.agora - Date.now())); } catch { /* */ }
+      E.etapa = 0; salvar(); location.reload();
+      return new Promise(() => {});
+    }
     if (!r.ok || !d.checkout_url) throw new Error(d.erro || "pagamento");
     return d.checkout_url;
   }
@@ -618,4 +628,38 @@
   }
   desenhar();
   if (E.etapa === 4) confirmar();
+
+  /* Faixa da promoção: conta até a hora de fim e leva direto à escolha da placa */
+  (function faixaPromo() {
+    if (!promoAtiva) return;
+    const m = C.modelos.reduce((a, b) => (b.preco < a.preco ? b : a));
+    const reais = (n) => `R$ ${n}`, pct = Math.round((1 - m.preco / m.precoDe) * 100);
+    const caixas = ["dias", "horas", "min", "seg"].map((t) => { const n = h("b", null, "00"); return { n, el: h("span", { class: "vv-faixa-num" }, n, h("small", null, t)) }; });
+    const faixa = h("a", { class: "vv-faixa", href: "#comprar", "aria-label": `Promoção: placas de ${reais(m.precoDe)} por ${reais(m.preco)}. Escolher minha placa.`, on: { click: (ev) => { ev.preventDefault(); vaiPara(0); } } },
+      h("span", { class: "vv-faixa-oferta" },
+        h("em", null, `−${pct}%`),
+        h("span", null, "Placas de ", h("s", null, reais(m.precoDe)), " por ", h("strong", null, reais(m.preco)), h("small", null, `Depois volta para ${reais(m.precoCheio)}`))),
+      h("span", { class: "vv-faixa-tempo" }, h("small", null, "Acaba em"), h("span", { class: "vv-faixa-nums", role: "timer" }, caixas.map((c) => c.el))),
+      h("span", { class: "vv-faixa-cta" }, "Escolher minha placa", h("i", { "aria-hidden": "true" }, " →")));
+    document.body.append(faixa);
+    document.body.classList.add("vv-com-faixa");
+    const medir = () => document.documentElement.style.setProperty("--vv-faixa-h", `${faixa.offsetHeight}px`);
+    window.addEventListener("resize", medir);
+    medir();
+    const doisDig = (n) => String(n).padStart(2, "0");
+    const tique = () => {
+      const r = C.promoFim - relogio();
+      if (r <= 0) {
+        clearInterval(timer); faixa.remove(); document.body.classList.remove("vv-com-faixa");
+        promoAtiva = false; voltaPrecoCheio();
+        // Quem já está com o link de pagamento aberto fica nele; o resto recarrega para o site todo mostrar o preço cheio.
+        if (E.etapa !== 4) location.reload();
+        return;
+      }
+      const s = Math.floor(r / 1000);
+      [Math.floor(s / 86400), Math.floor(s / 3600) % 24, Math.floor(s / 60) % 60, s % 60].forEach((v, i) => { caixas[i].n.textContent = doisDig(v); });
+    };
+    const timer = setInterval(tique, 1000);
+    tique();
+  })();
 })();
