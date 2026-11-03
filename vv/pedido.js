@@ -4,7 +4,8 @@
   const C = window.VV_CONFIG;
   /* Promoção: o Worker usa a mesma hora de fim. O relógio do aparelho é corrigido se a cobrança acusar diferença. */
   const relogio = () => { try { return Date.now() + (+sessionStorage.getItem("vv-relogio") || 0); } catch { return Date.now(); } };
-  const voltaPrecoCheio = () => C.modelos.forEach((m) => { m.preco = m.precoCheio ?? m.preco; });
+  // A oferta "enquanto durarem os estoques" não tem prazo: não volta ao preço cheio com a promoção.
+  const voltaPrecoCheio = () => C.modelos.forEach((m) => { if (!m.oferta) m.preco = m.precoCheio ?? m.preco; });
   let promoAtiva = relogio() < C.promoFim;
   if (!promoAtiva) voltaPrecoCheio();
   const CHAVE = "vv-pedido";
@@ -253,7 +254,7 @@
             const antes = E.qtd; escolherModelo(m.id); mostrarNota(); if (E.qtd !== antes) desenhar(); } } }),
           m.img ? h("img", { src: m.img, alt: "", loading: "lazy", decoding: "async", width: "120", height: "120" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
           m.label,
-          promoAtiva && m.precoDe > m.preco ? h("span", { class: "vv-op-de" }, h("s", { "aria-label": `De ${brl(m.precoDe)}` }, brl(m.precoDe)), " ", h("em", null, `−${Math.round((1 - m.preco / m.precoDe) * 100)}%`)) : null,
+          (promoAtiva || m.oferta) && m.precoDe > m.preco ? h("span", { class: "vv-op-de" }, h("s", { "aria-label": `De ${brl(m.precoDe)}` }, brl(m.precoDe)), " ", h("em", null, `−${Math.round((1 - m.preco / m.precoDe) * 100)}%`)) : null,
           h("b", { class: "vv-op-preco" }, brl(m.preco)),
           [m.tam, m.min > 1 ? `Mínimo de ${m.min} unidades` : null].filter(Boolean).map((t) => h("small", { class: "vv-op-info" }, t))))),
       nota,
@@ -632,7 +633,8 @@
   /* Faixa da promoção: conta até a hora de fim e leva direto à escolha da placa */
   (function faixaPromo() {
     if (!promoAtiva) return;
-    const m = C.modelos.reduce((a, b) => (b.preco < a.preco ? b : a));
+    // A faixa tem contagem e "depois volta para": a oferta sem prazo fica de fora.
+    const m = C.modelos.filter((x) => !x.oferta).reduce((a, b) => (b.preco < a.preco ? b : a));
     const reais = (n) => `R$ ${n}`, pct = Math.round((1 - m.preco / m.precoDe) * 100);
     const caixas = ["dias", "horas", "min", "seg"].map((t) => { const n = h("b", null, "00"); return { n, el: h("span", { class: "vv-faixa-num" }, n, h("small", null, t)) }; });
     const faixa = h("a", { class: "vv-faixa", href: "#comprar", "aria-label": `Promoção: placas de ${reais(m.precoDe)} por ${reais(m.preco)}. Escolher minha placa.`, on: { click: (ev) => { ev.preventDefault(); vaiPara(0); } } },

@@ -45,6 +45,32 @@ window.VV_CATALOGO = {
  ],
  "modelos": [
   {
+   "id": "mesa-branca",
+   "label": "Mesa NFC Branca",
+   "cat": "google",
+   "preco": 39.99,
+   "precoCheio": 107,
+   "precoDe": 107,
+   "img": "vv/img/cat/mesa-branca.webp",
+   "tam": "14 x 10 cm",
+   "oferta": true,
+   "semDescontoConfig": true,
+   "nota": "Oferta relâmpago: R$ 39,99 enquanto durarem os estoques."
+  },
+  {
+   "id": "mesa-preta-14",
+   "label": "Mesa NFC Preta 14 cm",
+   "cat": "google",
+   "preco": 39.99,
+   "precoCheio": 107,
+   "precoDe": 107,
+   "img": "vv/img/cat/mesa-preta-14.webp",
+   "tam": "14 x 10 cm",
+   "oferta": true,
+   "semDescontoConfig": true,
+   "nota": "Oferta relâmpago: R$ 39,99 enquanto durarem os estoques."
+  },
+  {
    "id": "acrilico-l",
    "label": "Acrílico",
    "cat": "google",
@@ -238,26 +264,6 @@ window.VV_CATALOGO = {
    "precoDe": 162,
    "img": "vv/img/cat/mesa-qr-preta.webp",
    "tam": "12 x 10 cm"
-  },
-  {
-   "id": "mesa-branca",
-   "label": "Mesa NFC Branca",
-   "cat": "google",
-   "preco": 85,
-   "precoCheio": 107,
-   "precoDe": 162,
-   "img": "vv/img/cat/mesa-branca.webp",
-   "tam": "14 x 10 cm"
-  },
-  {
-   "id": "mesa-preta-14",
-   "label": "Mesa NFC Preta 14 cm",
-   "cat": "google",
-   "preco": 85,
-   "precoCheio": 107,
-   "precoDe": 162,
-   "img": "vv/img/cat/mesa-preta-14.webp",
-   "tam": "14 x 10 cm"
   },
   {
    "id": "alta-branca-qr",
