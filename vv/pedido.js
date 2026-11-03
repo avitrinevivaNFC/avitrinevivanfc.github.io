@@ -47,9 +47,9 @@
   /* O Worker recalcula o mesmo total. A conta é em centavos e o desconto vale por unidade, como na cobrança. */
   function valores() {
     if (!E.carrinho.length) return null;
-    const cent = (n) => Math.round(n * 100), pct = E.configDepois ? C.descontoConfigDepois : 0;
+    const cent = (n) => Math.round(n * 100), pct = (m) => E.configDepois && !m.semDescontoConfig ? C.descontoConfigDepois : 0;
     const sub = E.carrinho.reduce((t, i) => t + i.qtd * cent(modelo(i.id).preco), 0);
-    const comDesconto = E.carrinho.reduce((t, i) => t + i.qtd * Math.round(cent(modelo(i.id).preco) * (100 - pct) / 100), 0);
+    const comDesconto = E.carrinho.reduce((t, i) => t + i.qtd * Math.round(cent(modelo(i.id).preco) * (100 - pct(modelo(i.id))) / 100), 0);
     return { q: totalUnidades(), itens: E.carrinho, subtotal: sub / 100, desconto: (sub - comDesconto) / 100, frete: C.frete, total: (comDesconto + cent(C.frete)) / 100 };
   }
 
@@ -248,6 +248,7 @@
             const antes = E.qtd; escolherModelo(m.id); mostrarNota(); if (E.qtd !== antes) desenhar(); } } }),
           m.img ? h("img", { src: m.img, alt: "", loading: "lazy", decoding: "async", width: "120", height: "120" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
           m.label,
+          m.precoDe > m.preco ? h("span", { class: "vv-op-de" }, h("s", { "aria-label": `De ${brl(m.precoDe)}` }, brl(m.precoDe)), " ", h("em", null, `−${Math.round((1 - m.preco / m.precoDe) * 100)}%`)) : null,
           h("b", { class: "vv-op-preco" }, brl(m.preco)),
           [m.tam, m.min > 1 ? `Mínimo de ${m.min} unidades` : null].filter(Boolean).map((t) => h("small", { class: "vv-op-info" }, t))))),
       nota,
@@ -307,8 +308,8 @@
       h("h3", null, "Personalização"),
       h("fieldset", { class: "vv-opcoes vv-modo" }, h("legend", null, "Como quer receber as placas?"),
         modo(false, "Receber configurada por nós", "Informe seus links agora e receba pronta para usar."),
-        modo(true, `Receber em casa sem configuração: ${C.descontoConfigDepois}% de desconto`, "Não fazemos a configuração: você personaliza pessoalmente quando a placa chegar, com as orientações que enviamos por mensagem no despacho.")),
-      E.configDepois ? h("p", { class: "vv-aviso" }, `Você não precisa informar links agora. O desconto de ${C.descontoConfigDepois}% sobre as placas já aparece no resumo; o frete não entra no desconto.`) : [
+        modo(true, `Receber em casa sem configuração: ${C.descontoConfigDepois}% de desconto nas placas`, "Não fazemos a configuração: você personaliza pessoalmente quando a placa chegar, com as orientações que enviamos por mensagem no despacho.")),
+      E.configDepois ? h("p", { class: "vv-aviso" }, `Você não precisa informar links agora. O desconto de ${C.descontoConfigDepois}% sobre as placas (etiquetas NFC não entram) já aparece no resumo; o frete não entra no desconto.`) : [
         n > 1 ? h("label", { class: "vv-check" },
           h("input", { type: "checkbox", checked: E.distintas, on: { change: (e) => { E.distintas = e.target.checked; ajustarUnidades(); salvar(); desenhar(); } } }),
           h("span", null, `Estas ${n} placas têm estabelecimentos ou links diferentes`)) : null,
