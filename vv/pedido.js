@@ -470,11 +470,17 @@
     const d = await r.json().catch(() => ({}));
     if (!r.ok || !d.success) throw new Error("email");
   }
+  /* Para o servidor avisar a Meta da compra mesmo se o cliente não voltar ao site (o Worker guarda só o hash). */
+  function rastreio() {
+    const ck = (n) => (document.cookie.match(new RegExp("(?:^|; )" + n + "=([^;]*)")) || [])[1] || "";
+    const c = E.comprador;
+    return { fbp: ck("_fbp"), fbc: ck("_fbc"), email: c.email, fone: c.fone, nome: c.nome, cidade: c.cidade, uf: c.uf, cep: c.cep };
+  }
   async function criarPagamento() {
     const v = valores();
     const r = await comTempo(`${C.pagamentoApi}/pagamento`, {
       method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ pedido: E.pedidoId, itens: v.itens, configDepois: E.configDepois, totalExibido: v.total }),
+      body: JSON.stringify({ pedido: E.pedidoId, itens: v.itens, configDepois: E.configDepois, totalExibido: v.total, rastreio: rastreio() }),
     });
     const d = await r.json().catch(() => ({}));
     if (d.erro === "total_divergente" && d.promoAtiva !== promoAtiva) { // relógio do aparelho errado ou a promoção virou agora
