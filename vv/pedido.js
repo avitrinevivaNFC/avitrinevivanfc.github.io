@@ -65,6 +65,18 @@
   }
 
   /* DOM */
+  /* Pixel da Meta: todo evento leva produto, quantidade e valor em reais. */
+  function pixel(evento, itens, valor, opcoes) {
+    if (!window.fbq || !itens.length) return;
+    const contents = itens.map((i) => ({ id: i.id, quantity: i.qtd, item_price: modelo(i.id).preco }));
+    window.fbq("track", evento, {
+      currency: "BRL", value: Math.round(valor * 100) / 100, content_type: "product",
+      content_ids: contents.map((c) => c.id), content_name: itens.map((i) => rotuloModelo(i.id)).join(" + "),
+      contents, num_items: itens.reduce((t, i) => t + i.qtd, 0),
+    }, opcoes);
+  }
+  const valorItens = (itens) => itens.reduce((t, i) => t + i.qtd * modelo(i.id).preco, 0);
+
   function h(tag, props, ...filhos) {
     const el = document.createElement(tag);
     for (const [k, v] of Object.entries(props || {})) {
@@ -155,6 +167,7 @@
     if (erros.qtd) { salvar(); desenhar(); document.getElementById("qtd").focus(); return; }
     const adicionadas = +E.qtd, item = noCarrinho(m.id);
     if (item) item.qtd += adicionadas; else E.carrinho.push({ id: m.id, qtd: adicionadas });
+    pixel("AddToCart", [{ id: m.id, qtd: adicionadas }], adicionadas * m.preco);
     E.qtd = String(m.min || 1);
     ajustarUnidades(); salvar();
     // Redesenhar recriaria os 50 cartões: só atualiza o que mudou, salvo para limpar um erro exibido.
@@ -182,6 +195,7 @@
       voltandoPara = n; history.go(entrada(n) - entrada(E.etapa)); return; // quem desenha é o popstate
     }
     const avancou = n > E.etapa;
+    if (avancou && E.etapa === 0 && !E.checkoutEnviado && valores()) { pixel("InitiateCheckout", E.carrinho, valores().total); E.checkoutEnviado = true; }
     E.etapa = n; salvar();
     history[avancou ? "pushState" : "replaceState"](marcaHist(n), "");
     desenhar(); irAoFormulario();
@@ -259,7 +273,9 @@
       carrossel("vv-modelos", `modelos-${E.cat}`, "Modelo", "modelos",
         lista.map((m) => h("label", { class: "vv-op" },
           h("input", { type: "radio", name: "modelo", value: m.id, checked: m.id === E.modelo, on: { change: () => {
-            const antes = E.qtd; escolherModelo(m.id); mostrarNota(); if (E.qtd !== antes) desenhar(); } } }),
+            const antes = E.qtd; escolherModelo(m.id); mostrarNota();
+            pixel("ViewContent", [{ id: m.id, qtd: 1 }], m.preco);
+            if (E.qtd !== antes) desenhar(); } } }),
           m.img ? h("img", { src: m.img, alt: "", loading: "lazy", decoding: "async", width: "120", height: "120" }) : h("span", { class: "vv-sem-foto" }, "Foto em breve"),
           m.label,
           (promoAtiva || m.oferta) && m.precoDe > m.preco ? h("span", { class: "vv-op-de" }, h("s", { "aria-label": `De ${brl(m.precoDe)}` }, brl(m.precoDe)), " ", h("em", null, `−${Math.round((1 - m.preco / m.precoDe) * 100)}%`)) : null,
@@ -486,7 +502,8 @@
       if (!E.emailEnviado) {
         try { await enviarEmail(); } catch { painel = { tipo: "erroEmail" }; return; }
         E.emailEnviado = true; E.assinatura = assinatura;
-        if (window.fbq && !E.leadEnviado) window.fbq("track", "Lead");
+        if (!E.leadEnviado) pixel("Lead", E.carrinho, valores().total);
+        try { localStorage.setItem("vv-compra-" + E.pedidoId, JSON.stringify({ itens: E.carrinho, total: valores().total })); } catch { /* */ }
         E.leadEnviado = true; salvar();
       }
       if (!C.pagamentoApi) { painel = { tipo: "semPagamento" }; return; }
@@ -621,9 +638,13 @@
     const [a, b] = MSG[status] || ["Não confirmamos o pagamento", "Não conseguimos consultar o status agora. Se você pagou, o comprovante do Mercado Pago vale até a confirmação; fale conosco se precisar."];
     t.textContent = a; m.textContent = `${b} Pedido ${pedido}.`;
     if (status === "approved") {
-      if (window.fbq && !sessionStorage.getItem("vv-comprou-" + pedido)) {
-        window.fbq("track", "Purchase", { value: E.pedidoId === pedido && valores() ? valores().total : undefined, currency: "BRL", content_ids: [pedido] });
-        try { sessionStorage.setItem("vv-comprou-" + pedido, "1"); } catch { /* */ }
+      if (window.fbq && !localStorage.getItem("vv-comprou-" + pedido)) {
+        // Mesmo se voltar em outra aba: o pedido guardado no envio tem itens e total.
+        let c = null;
+        try { c = JSON.parse(localStorage.getItem("vv-compra-" + pedido)); } catch { /* */ }
+        if (!c && E.pedidoId === pedido && valores()) c = { itens: E.carrinho, total: valores().total };
+        if (c) pixel("Purchase", c.itens, c.total, { eventID: "compra-" + pedido });
+        try { localStorage.setItem("vv-comprou-" + pedido, "1"); localStorage.removeItem("vv-compra-" + pedido); } catch { /* */ }
       }
       novoPedido();
     }
